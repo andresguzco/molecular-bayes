@@ -1,4 +1,4 @@
-import Pipeline.utils as utils
+import utils as utils
 import argparse
 import wandb
 import time
