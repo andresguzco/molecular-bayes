@@ -1,0 +1,1843 @@
+Mon May 27 21:04:13 EDT 2024: Job 12700247 is allocated resources.
+Inside slurm_launcher.slrm (/var/spool/slurmd/job12700247/slurm_script). received arguments: main_QM9.py --output-dir results/models/VI --model-name variational --data-path datasets/qm9 --variational True --epochs 100
+Namespace(amp=False, batch_size=64, clip_grad=None, compute_stats=False, cooldown_epochs=10, data_path='datasets/qm9', decay_epochs=30, decay_rate=0.1, dist_url='env://', distributed=False, drop_path_rate=0.0, epochs=100, epochs_bayes=300, feature_type='one_hot', input_irreps=None, laplace=False, loss='l1', lr=0.0005, lr_noise=None, lr_noise_pct=0.67, lr_noise_std=1.0, min_lr=1e-05, model_ema=True, model_ema_decay=0.9999, model_ema_force_cpu=False, model_name='variational', momentum=0.9, num_basis=32, opt='adamw', opt_betas=None, opt_eps=1e-08, output_channels=1, output_dir='results/models/VI', patience_epochs=10, pin_mem=True, print_freq=100, radius=2.0, rank=0, sched='cosine', seed=0, standardize=True, target=7, variational=True, warmup_epochs=5, warmup_lr=1e-06, weight_decay=0.01, workers=4, world_size=1)
+wandb: Currently logged in as: andresguzco. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.17.0
+wandb: Run data is saved locally in /fs01/home/aguzmanc/equiformer_v2/wandb/run-20240527_210429-m9yyfcq1
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run whole-snowflake-127
+wandb: ⭐️ View project at https://wandb.ai/andresguzco/equiformer_v2
+wandb: 🚀 View run at https://wandb.ai/andresguzco/equiformer_v2/runs/m9yyfcq1
+Training set mean: -76.12300872802734, std:10.329672813415527
+VariationalEquiformer(
+  (sphere_embedding): Embedding(90, 128)
+  (distance_expansion): GaussianSmearing()
+  (SO3_rotation): ModuleList(
+    (0): SO3_Rotation(
+      (mapping): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
+    )
+  )
+  (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[2])
+  (SO3_grid): (4, 4)
+  (edge_degree_embedding): EdgeDegreeEmbedding(
+    (SO3_rotation): ModuleList(
+      (0): SO3_Rotation(
+        (mapping): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
+      )
+    )
+    (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[2])
+    (source_embedding): Embedding(90, 64)
+    (target_embedding): Embedding(90, 64)
+    (rad_func): RadialFunction(
+      (net): Sequential(
+        (0): Linear(in_features=728, out_features=64, bias=True)
+        (1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+        (2): SiLU()
+        (3): Linear(in_features=64, out_features=64, bias=True)
+        (4): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+        (5): SiLU()
+        (6): Linear(in_features=64, out_features=640, bias=True)
+      )
+    )
+  )
+  (blocks): ModuleList(
+    (0): TransBlockV2(
+      (norm_1): EquivariantRMSNormArraySphericalHarmonicsV2(lmax=4, num_channels=128, eps=1e-05, centering=True, std_balance_degrees=True)
+      (ga): SO2EquivariantGraphAttention(
+        (SO3_rotation): ModuleList(
+          (0): SO3_Rotation(
+            (mapping): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
+          )
+        )
+        (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[2])
+        (SO3_grid): (4, 4)
+        (source_embedding): Embedding(90, 64)
+        (target_embedding): Embedding(90, 64)
+        (so2_conv_1): SO2_Convolution(
+          (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[2])
+          (fc_m0): Linear(in_features=1280, out_features=1024, bias=True)
+          (so2_m_conv): ModuleList(
+            (0): SO2_m_Convolution(
+              (fc): Linear(in_features=1024, out_features=1024, bias=False)
+            )
+            (1): SO2_m_Convolution(
+              (fc): Linear(in_features=768, out_features=768, bias=False)
+            )
+          )
+          (rad_func): RadialFunction(
+            (net): Sequential(
+              (0): Linear(in_features=728, out_features=64, bias=True)
+              (1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+              (2): SiLU()
+              (3): Linear(in_features=64, out_features=64, bias=True)
+              (4): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+              (5): SiLU()
+              (6): Linear(in_features=64, out_features=3072, bias=True)
+            )
+          )
+        )
+        (alpha_norm): LayerNorm((32,), eps=1e-05, elementwise_affine=True)
+        (alpha_act): SmoothLeakyReLU(negative_slope=0.2)
+        (alpha_dropout): Dropout(p=0.1, inplace=False)
+        (s2_act): SeparableS2Activation(
+          (scalar_act): SiLU()
+          (s2_act): S2Activation(
+            (act): SiLU()
+          )
+        )
+        (so2_conv_2): SO2_Convolution(
+          (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[2])
+          (fc_m0): Linear(in_features=640, out_features=640, bias=True)
+          (so2_m_conv): ModuleList(
+            (0): SO2_m_Convolution(
+              (fc): Linear(in_features=512, out_features=1024, bias=False)
+            )
+            (1): SO2_m_Convolution(
+              (fc): Linear(in_features=384, out_features=768, bias=False)
+            )
+          )
+        )
+        (proj): SO3_LinearV2(in_features=128, out_features=128, lmax=4)
+      )
+      (drop_path): GraphDropPath(drop_prob=0.05)
+      (norm_2): EquivariantRMSNormArraySphericalHarmonicsV2(lmax=4, num_channels=128, eps=1e-05, centering=True, std_balance_degrees=True)
+      (ffn): FeedForwardNetwork(
+        (SO3_grid): (4, 4)
+        (so3_linear_1): SO3_LinearV2(in_features=128, out_features=16, lmax=4)
+        (gating_linear): Linear(in_features=128, out_features=16, bias=True)
+        (s2_act): SeparableS2Activation(
+          (scalar_act): SiLU()
+          (s2_act): S2Activation(
+            (act): SiLU()
+          )
+        )
+        (so3_linear_2): SO3_LinearV2(in_features=16, out_features=128, lmax=4)
+      )
+    )
+  )
+  (norm): EquivariantRMSNormArraySphericalHarmonicsV2(lmax=4, num_channels=128, eps=1e-05, centering=True, std_balance_degrees=True)
+  (energy_block): FeedForwardNetwork(
+    (SO3_grid): (4, 4)
+    (so3_linear_1): SO3_LinearV2(in_features=128, out_features=16, lmax=4)
+    (gating_linear): Linear(in_features=128, out_features=16, bias=True)
+    (s2_act): SeparableS2Activation(
+      (scalar_act): SiLU()
+      (s2_act): S2Activation(
+        (act): SiLU()
+      )
+    )
+    (so3_linear_2): SO3_LinearVariational(in_features=16, out_features=1, lmax=4)
+  )
+)
+Number of params: 4677410
+Epoch: [0][0/1718] 	 loss: 1.25562, MAE: 12.70128, time/step=2372ms, lr=1.00e-06
+Epoch: [0][100/1718] 	 loss: 3.78424, MAE: 38.82122, time/step=292ms, lr=1.00e-06
+Epoch: [0][200/1718] 	 loss: 3.63943, MAE: 37.32559, time/step=277ms, lr=1.00e-06
+Epoch: [0][300/1718] 	 loss: 3.57918, MAE: 36.70329, time/step=271ms, lr=1.00e-06
+Epoch: [0][400/1718] 	 loss: 3.45765, MAE: 35.44811, time/step=268ms, lr=1.00e-06
+Epoch: [0][500/1718] 	 loss: 3.41453, MAE: 35.00284, time/step=267ms, lr=1.00e-06
+Epoch: [0][600/1718] 	 loss: 3.32271, MAE: 34.05447, time/step=267ms, lr=1.00e-06
+Epoch: [0][700/1718] 	 loss: 3.21986, MAE: 32.99226, time/step=267ms, lr=1.00e-06
+Epoch: [0][800/1718] 	 loss: 3.16010, MAE: 32.37510, time/step=266ms, lr=1.00e-06
+Epoch: [0][900/1718] 	 loss: 3.11178, MAE: 31.87610, time/step=266ms, lr=1.00e-06
+Epoch: [0][1000/1718] 	 loss: 3.03534, MAE: 31.08659, time/step=266ms, lr=1.00e-06
+Epoch: [0][1100/1718] 	 loss: 2.99727, MAE: 30.69348, time/step=265ms, lr=1.00e-06
+Epoch: [0][1200/1718] 	 loss: 2.93426, MAE: 30.04274, time/step=265ms, lr=1.00e-06
+Epoch: [0][1300/1718] 	 loss: 2.87588, MAE: 29.43988, time/step=265ms, lr=1.00e-06
+Epoch: [0][1400/1718] 	 loss: 2.82051, MAE: 28.86807, time/step=265ms, lr=1.00e-06
+Epoch: [0][1500/1718] 	 loss: 2.76810, MAE: 28.32683, time/step=265ms, lr=1.00e-06
+Epoch: [0][1600/1718] 	 loss: 2.71619, MAE: 27.79074, time/step=265ms, lr=1.00e-06
+Epoch: [0][1700/1718] 	 loss: 2.67158, MAE: 27.33007, time/step=265ms, lr=1.00e-06
+Epoch: [0][1717/1718] 	 loss: 2.66512, MAE: 27.26340, time/step=265ms, lr=1.00e-06
+Epoch: [1] Target: [7] train MAE: 27.26340, val MAE: 19.03014, test MAE: 17.43466, Time: 486.64s
+Best -- epoch=1, train MAE: 27.26340, val MAE: 19.03014, test MAE: 17.43466
+
+Epoch: [1] Target: [7] EMA val MAE: 37.53319, EMA test MAE: 38.29659, Time: 514.57s
+Best EMA -- epoch=1, val MAE: 37.53319, test MAE: 38.29659
+
+Epoch: [1][0/1718] 	 loss: 3.17011, MAE: 32.48214, time/step=696ms, lr=1.01e-04
+Epoch: [1][100/1718] 	 loss: 1.33087, MAE: 13.49663, time/step=270ms, lr=1.01e-04
+Epoch: [1][200/1718] 	 loss: 1.29460, MAE: 13.13363, time/step=264ms, lr=1.01e-04
+Epoch: [1][300/1718] 	 loss: 1.26963, MAE: 12.88600, time/step=264ms, lr=1.01e-04
+Epoch: [1][400/1718] 	 loss: 1.23600, MAE: 12.54767, time/step=262ms, lr=1.01e-04
+Epoch: [1][500/1718] 	 loss: 1.22356, MAE: 12.42715, time/step=261ms, lr=1.01e-04
+Epoch: [1][600/1718] 	 loss: 1.22313, MAE: 12.42975, time/step=262ms, lr=1.01e-04
+Epoch: [1][700/1718] 	 loss: 1.21271, MAE: 12.32812, time/step=262ms, lr=1.01e-04
+Epoch: [1][800/1718] 	 loss: 1.19107, MAE: 12.11002, time/step=264ms, lr=1.01e-04
+Epoch: [1][900/1718] 	 loss: 1.19350, MAE: 12.13980, time/step=264ms, lr=1.01e-04
+Epoch: [1][1000/1718] 	 loss: 1.18693, MAE: 12.07582, time/step=264ms, lr=1.01e-04
+Epoch: [1][1100/1718] 	 loss: 1.18156, MAE: 12.02375, time/step=264ms, lr=1.01e-04
+Epoch: [1][1200/1718] 	 loss: 1.17583, MAE: 11.96742, time/step=263ms, lr=1.01e-04
+Epoch: [1][1300/1718] 	 loss: 1.17062, MAE: 11.91605, time/step=264ms, lr=1.01e-04
+Epoch: [1][1400/1718] 	 loss: 1.16564, MAE: 11.86643, time/step=263ms, lr=1.01e-04
+Epoch: [1][1500/1718] 	 loss: 1.16151, MAE: 11.82530, time/step=263ms, lr=1.01e-04
+Epoch: [1][1600/1718] 	 loss: 1.15819, MAE: 11.79216, time/step=263ms, lr=1.01e-04
+Epoch: [1][1700/1718] 	 loss: 1.15435, MAE: 11.75320, time/step=263ms, lr=1.01e-04
+Epoch: [1][1717/1718] 	 loss: 1.15129, MAE: 11.72168, time/step=263ms, lr=1.01e-04
+Epoch: [2] Target: [7] train MAE: 11.72168, val MAE: 11.48559, test MAE: 11.62264, Time: 480.78s
+Best -- epoch=2, train MAE: 11.72168, val MAE: 11.48559, test MAE: 11.62264
+
+Epoch: [2] Target: [7] EMA val MAE: 29.84536, EMA test MAE: 30.49077, Time: 508.77s
+Best EMA -- epoch=2, val MAE: 29.84536, test MAE: 30.49077
+
+Epoch: [2][0/1718] 	 loss: 1.16201, MAE: 11.84235, time/step=674ms, lr=2.01e-04
+Epoch: [2][100/1718] 	 loss: 1.11467, MAE: 11.34921, time/step=268ms, lr=2.01e-04
+Epoch: [2][200/1718] 	 loss: 1.11847, MAE: 11.38262, time/step=267ms, lr=2.01e-04
+Epoch: [2][300/1718] 	 loss: 1.11502, MAE: 11.33969, time/step=265ms, lr=2.01e-04
+Epoch: [2][400/1718] 	 loss: 1.09962, MAE: 11.17411, time/step=265ms, lr=2.01e-04
+Epoch: [2][500/1718] 	 loss: 1.10253, MAE: 11.19702, time/step=266ms, lr=2.01e-04
+Epoch: [2][600/1718] 	 loss: 1.09566, MAE: 11.11880, time/step=266ms, lr=2.01e-04
+Epoch: [2][700/1718] 	 loss: 1.09085, MAE: 11.06177, time/step=265ms, lr=2.01e-04
+Epoch: [2][800/1718] 	 loss: 1.09099, MAE: 11.05610, time/step=265ms, lr=2.01e-04
+Epoch: [2][900/1718] 	 loss: 1.08875, MAE: 11.02551, time/step=265ms, lr=2.01e-04
+Epoch: [2][1000/1718] 	 loss: 1.08509, MAE: 10.98016, time/step=264ms, lr=2.01e-04
+Epoch: [2][1100/1718] 	 loss: 1.08045, MAE: 10.92494, time/step=264ms, lr=2.01e-04
+Epoch: [2][1200/1718] 	 loss: 1.07415, MAE: 10.85285, time/step=263ms, lr=2.01e-04
+Epoch: [2][1300/1718] 	 loss: 1.07460, MAE: 10.85007, time/step=263ms, lr=2.01e-04
+Epoch: [2][1400/1718] 	 loss: 1.07234, MAE: 10.81891, time/step=262ms, lr=2.01e-04
+Epoch: [2][1500/1718] 	 loss: 1.07321, MAE: 10.81963, time/step=262ms, lr=2.01e-04
+Epoch: [2][1600/1718] 	 loss: 1.06556, MAE: 10.73268, time/step=262ms, lr=2.01e-04
+Epoch: [2][1700/1718] 	 loss: 1.06303, MAE: 10.69859, time/step=262ms, lr=2.01e-04
+Epoch: [2][1717/1718] 	 loss: 1.06284, MAE: 10.69524, time/step=262ms, lr=2.01e-04
+Epoch: [3] Target: [7] train MAE: 10.69524, val MAE: 9.86127, test MAE: 9.93242, Time: 478.88s
+Best -- epoch=3, train MAE: 10.69524, val MAE: 9.86127, test MAE: 9.93242
+
+Epoch: [3] Target: [7] EMA val MAE: 18.59242, EMA test MAE: 18.71535, Time: 506.91s
+Best EMA -- epoch=3, val MAE: 18.59242, test MAE: 18.71535
+
+Epoch: [3][0/1718] 	 loss: 0.96545, MAE: 9.55267, time/step=689ms, lr=3.00e-04
+Epoch: [3][100/1718] 	 loss: 0.93986, MAE: 9.27933, time/step=269ms, lr=3.00e-04
+Epoch: [3][200/1718] 	 loss: 0.97807, MAE: 9.67241, time/step=266ms, lr=3.00e-04
+Epoch: [3][300/1718] 	 loss: 0.97517, MAE: 9.62997, time/step=266ms, lr=3.00e-04
+Epoch: [3][400/1718] 	 loss: 0.95219, MAE: 9.38284, time/step=264ms, lr=3.00e-04
+Epoch: [3][500/1718] 	 loss: 0.94582, MAE: 9.30930, time/step=263ms, lr=3.00e-04
+Epoch: [3][600/1718] 	 loss: 0.94803, MAE: 9.32272, time/step=263ms, lr=3.00e-04
+Epoch: [3][700/1718] 	 loss: 0.95902, MAE: 9.42560, time/step=261ms, lr=3.00e-04
+Epoch: [3][800/1718] 	 loss: 0.95960, MAE: 9.41990, time/step=262ms, lr=3.00e-04
+Epoch: [3][900/1718] 	 loss: 0.95173, MAE: 9.32572, time/step=262ms, lr=3.00e-04
+Epoch: [3][1000/1718] 	 loss: 0.95543, MAE: 9.35128, time/step=262ms, lr=3.00e-04
+Epoch: [3][1100/1718] 	 loss: 0.95903, MAE: 9.37440, time/step=262ms, lr=3.00e-04
+Epoch: [3][1200/1718] 	 loss: 0.95502, MAE: 9.31881, time/step=262ms, lr=3.00e-04
+Epoch: [3][1300/1718] 	 loss: 0.94992, MAE: 9.25241, time/step=262ms, lr=3.00e-04
+Epoch: [3][1400/1718] 	 loss: 0.95103, MAE: 9.25024, time/step=262ms, lr=3.00e-04
+Epoch: [3][1500/1718] 	 loss: 0.94844, MAE: 9.21045, time/step=262ms, lr=3.00e-04
+Epoch: [3][1600/1718] 	 loss: 0.94655, MAE: 9.17751, time/step=262ms, lr=3.00e-04
+Epoch: [3][1700/1718] 	 loss: 0.94535, MAE: 9.15199, time/step=262ms, lr=3.00e-04
+Epoch: [3][1717/1718] 	 loss: 0.94600, MAE: 9.15644, time/step=262ms, lr=3.00e-04
+Epoch: [4] Target: [7] train MAE: 9.15644, val MAE: 8.57870, test MAE: 7.92923, Time: 478.37s
+Best -- epoch=4, train MAE: 9.15644, val MAE: 8.57870, test MAE: 7.92923
+
+Epoch: [4] Target: [7] EMA val MAE: 11.62222, EMA test MAE: 11.55661, Time: 506.43s
+Best EMA -- epoch=4, val MAE: 11.62222, test MAE: 11.55661
+
+Epoch: [4][0/1718] 	 loss: 0.98181, MAE: 9.29391, time/step=730ms, lr=4.00e-04
+Epoch: [4][100/1718] 	 loss: 0.86862, MAE: 8.12632, time/step=268ms, lr=4.00e-04
+Epoch: [4][200/1718] 	 loss: 0.90619, MAE: 8.49775, time/step=266ms, lr=4.00e-04
+Epoch: [4][300/1718] 	 loss: 0.90298, MAE: 8.45442, time/step=268ms, lr=4.00e-04
+Epoch: [4][400/1718] 	 loss: 0.89842, MAE: 8.39539, time/step=266ms, lr=4.00e-04
+Epoch: [4][500/1718] 	 loss: 0.89609, MAE: 8.35980, time/step=264ms, lr=4.00e-04
+Epoch: [4][600/1718] 	 loss: 0.89226, MAE: 8.31151, time/step=264ms, lr=4.00e-04
+Epoch: [4][700/1718] 	 loss: 0.89162, MAE: 8.29714, time/step=264ms, lr=4.00e-04
+Epoch: [4][800/1718] 	 loss: 0.88718, MAE: 8.24382, time/step=263ms, lr=4.00e-04
+Epoch: [4][900/1718] 	 loss: 0.87639, MAE: 8.12609, time/step=263ms, lr=4.00e-04
+Epoch: [4][1000/1718] 	 loss: 0.87501, MAE: 8.10712, time/step=262ms, lr=4.00e-04
+Epoch: [4][1100/1718] 	 loss: 0.87123, MAE: 8.06311, time/step=263ms, lr=4.00e-04
+Epoch: [4][1200/1718] 	 loss: 0.87424, MAE: 8.08744, time/step=262ms, lr=4.00e-04
+Epoch: [4][1300/1718] 	 loss: 0.87456, MAE: 8.08397, time/step=262ms, lr=4.00e-04
+Epoch: [4][1400/1718] 	 loss: 0.86979, MAE: 8.02782, time/step=262ms, lr=4.00e-04
+Epoch: [4][1500/1718] 	 loss: 0.86996, MAE: 8.02264, time/step=262ms, lr=4.00e-04
+Epoch: [4][1600/1718] 	 loss: 0.86530, MAE: 7.96780, time/step=262ms, lr=4.00e-04
+Epoch: [4][1700/1718] 	 loss: 0.86435, MAE: 7.95219, time/step=262ms, lr=4.00e-04
+Epoch: [4][1717/1718] 	 loss: 0.86302, MAE: 7.93751, time/step=262ms, lr=4.00e-04
+Epoch: [5] Target: [7] train MAE: 7.93751, val MAE: 8.23052, test MAE: 7.79802, Time: 477.66s
+Best -- epoch=5, train MAE: 7.93751, val MAE: 8.23052, test MAE: 7.79802
+
+Epoch: [5] Target: [7] EMA val MAE: 10.60662, EMA test MAE: 11.89467, Time: 505.71s
+Best EMA -- epoch=5, val MAE: 10.60662, test MAE: 11.89467
+
+Epoch: [5][0/1718] 	 loss: 0.35666, MAE: 2.60939, time/step=662ms, lr=4.97e-04
+Epoch: [5][100/1718] 	 loss: 0.86615, MAE: 7.85851, time/step=267ms, lr=4.97e-04
+Epoch: [5][200/1718] 	 loss: 0.87558, MAE: 7.94541, time/step=271ms, lr=4.97e-04
+Epoch: [5][300/1718] 	 loss: 0.84476, MAE: 7.61836, time/step=268ms, lr=4.97e-04
+Epoch: [5][400/1718] 	 loss: 0.85657, MAE: 7.73468, time/step=267ms, lr=4.97e-04
+Epoch: [5][500/1718] 	 loss: 0.84588, MAE: 7.61586, time/step=267ms, lr=4.97e-04
+Epoch: [5][600/1718] 	 loss: 0.84307, MAE: 7.58199, time/step=265ms, lr=4.97e-04
+Epoch: [5][700/1718] 	 loss: 0.85017, MAE: 7.64948, time/step=265ms, lr=4.97e-04
+Epoch: [5][800/1718] 	 loss: 0.85454, MAE: 7.68604, time/step=265ms, lr=4.97e-04
+Epoch: [5][900/1718] 	 loss: 0.85031, MAE: 7.63405, time/step=265ms, lr=4.97e-04
+Epoch: [5][1000/1718] 	 loss: 0.85199, MAE: 7.64202, time/step=264ms, lr=4.97e-04
+Epoch: [5][1100/1718] 	 loss: 0.84567, MAE: 7.56804, time/step=264ms, lr=4.97e-04
+Epoch: [5][1200/1718] 	 loss: 0.84580, MAE: 7.56307, time/step=264ms, lr=4.97e-04
+Epoch: [5][1300/1718] 	 loss: 0.84633, MAE: 7.56392, time/step=264ms, lr=4.97e-04
+Epoch: [5][1400/1718] 	 loss: 0.83937, MAE: 7.48783, time/step=264ms, lr=4.97e-04
+Epoch: [5][1500/1718] 	 loss: 0.84543, MAE: 7.54786, time/step=264ms, lr=4.97e-04
+Epoch: [5][1600/1718] 	 loss: 0.84392, MAE: 7.52821, time/step=264ms, lr=4.97e-04
+Epoch: [5][1700/1718] 	 loss: 0.84097, MAE: 7.49445, time/step=264ms, lr=4.97e-04
+Epoch: [5][1717/1718] 	 loss: 0.84238, MAE: 7.50862, time/step=264ms, lr=4.97e-04
+Epoch: [6] Target: [7] train MAE: 7.50862, val MAE: 8.20402, test MAE: 7.62911, Time: 480.93s
+Best -- epoch=6, train MAE: 7.50862, val MAE: 8.20402, test MAE: 7.62911
+
+Epoch: [6] Target: [7] EMA val MAE: 9.80706, EMA test MAE: 10.97538, Time: 508.92s
+Best EMA -- epoch=6, val MAE: 9.80706, test MAE: 10.97538
+
+Epoch: [6][0/1718] 	 loss: 0.63421, MAE: 5.32012, time/step=679ms, lr=4.96e-04
+Epoch: [6][100/1718] 	 loss: 0.75232, MAE: 6.55659, time/step=265ms, lr=4.96e-04
+Epoch: [6][200/1718] 	 loss: 0.74932, MAE: 6.54278, time/step=260ms, lr=4.96e-04
+Epoch: [6][300/1718] 	 loss: 0.76349, MAE: 6.69969, time/step=261ms, lr=4.96e-04
+Epoch: [6][400/1718] 	 loss: 0.79094, MAE: 6.98526, time/step=261ms, lr=4.96e-04
+Epoch: [6][500/1718] 	 loss: 0.79885, MAE: 7.06114, time/step=260ms, lr=4.96e-04
+Epoch: [6][600/1718] 	 loss: 0.79919, MAE: 7.05766, time/step=261ms, lr=4.96e-04
+Epoch: [6][700/1718] 	 loss: 0.81248, MAE: 7.18611, time/step=261ms, lr=4.96e-04
+Epoch: [6][800/1718] 	 loss: 0.80907, MAE: 7.14260, time/step=260ms, lr=4.96e-04
+Epoch: [6][900/1718] 	 loss: 0.80895, MAE: 7.13454, time/step=261ms, lr=4.96e-04
+Epoch: [6][1000/1718] 	 loss: 0.81085, MAE: 7.14706, time/step=261ms, lr=4.96e-04
+Epoch: [6][1100/1718] 	 loss: 0.81289, MAE: 7.16163, time/step=261ms, lr=4.96e-04
+Epoch: [6][1200/1718] 	 loss: 0.81129, MAE: 7.13920, time/step=261ms, lr=4.96e-04
+Epoch: [6][1300/1718] 	 loss: 0.81075, MAE: 7.12998, time/step=261ms, lr=4.96e-04
+Epoch: [6][1400/1718] 	 loss: 0.80802, MAE: 7.09752, time/step=261ms, lr=4.96e-04
+Epoch: [6][1500/1718] 	 loss: 0.80567, MAE: 7.07119, time/step=261ms, lr=4.96e-04
+Epoch: [6][1600/1718] 	 loss: 0.80917, MAE: 7.10524, time/step=262ms, lr=4.96e-04
+Epoch: [6][1700/1718] 	 loss: 0.80781, MAE: 7.08768, time/step=262ms, lr=4.96e-04
+Epoch: [6][1717/1718] 	 loss: 0.80722, MAE: 7.08113, time/step=261ms, lr=4.96e-04
+Epoch: [7] Target: [7] train MAE: 7.08113, val MAE: 6.38927, test MAE: 6.92290, Time: 477.40s
+Best -- epoch=7, train MAE: 7.08113, val MAE: 6.38927, test MAE: 6.92290
+
+Epoch: [7] Target: [7] EMA val MAE: 9.36251, EMA test MAE: 9.66036, Time: 505.40s
+Best EMA -- epoch=7, val MAE: 9.36251, test MAE: 9.66036
+
+Epoch: [7][0/1718] 	 loss: 0.66448, MAE: 5.57050, time/step=696ms, lr=4.94e-04
+Epoch: [7][100/1718] 	 loss: 0.84215, MAE: 7.40018, time/step=263ms, lr=4.94e-04
+Epoch: [7][200/1718] 	 loss: 0.83436, MAE: 7.31731, time/step=258ms, lr=4.94e-04
+Epoch: [7][300/1718] 	 loss: 0.79194, MAE: 6.88067, time/step=258ms, lr=4.94e-04
+Epoch: [7][400/1718] 	 loss: 0.80574, MAE: 7.02857, time/step=261ms, lr=4.94e-04
+Epoch: [7][500/1718] 	 loss: 0.81569, MAE: 7.12685, time/step=261ms, lr=4.94e-04
+Epoch: [7][600/1718] 	 loss: 0.82442, MAE: 7.21125, time/step=262ms, lr=4.94e-04
+Epoch: [7][700/1718] 	 loss: 0.82489, MAE: 7.20869, time/step=262ms, lr=4.94e-04
+Epoch: [7][800/1718] 	 loss: 0.82327, MAE: 7.18393, time/step=262ms, lr=4.94e-04
+Epoch: [7][900/1718] 	 loss: 0.82010, MAE: 7.14667, time/step=262ms, lr=4.94e-04
+Epoch: [7][1000/1718] 	 loss: 0.82023, MAE: 7.14544, time/step=261ms, lr=4.94e-04
+Epoch: [7][1100/1718] 	 loss: 0.81434, MAE: 7.08325, time/step=262ms, lr=4.94e-04
+Epoch: [7][1200/1718] 	 loss: 0.81412, MAE: 7.08054, time/step=261ms, lr=4.94e-04
+Epoch: [7][1300/1718] 	 loss: 0.81458, MAE: 7.08466, time/step=261ms, lr=4.94e-04
+Epoch: [7][1400/1718] 	 loss: 0.81127, MAE: 7.05043, time/step=260ms, lr=4.94e-04
+Epoch: [7][1500/1718] 	 loss: 0.80905, MAE: 7.02821, time/step=261ms, lr=4.94e-04
+Epoch: [7][1600/1718] 	 loss: 0.81348, MAE: 7.07336, time/step=261ms, lr=4.94e-04
+Epoch: [7][1700/1718] 	 loss: 0.81310, MAE: 7.06638, time/step=261ms, lr=4.94e-04
+Epoch: [7][1717/1718] 	 loss: 0.81281, MAE: 7.06294, time/step=261ms, lr=4.94e-04
+Epoch: [8] Target: [7] train MAE: 7.06294, val MAE: 6.62112, test MAE: 6.58495, Time: 476.25s
+Best -- epoch=7, train MAE: 7.08113, val MAE: 6.38927, test MAE: 6.92290
+
+Epoch: [8] Target: [7] EMA val MAE: 9.50235, EMA test MAE: 8.57455, Time: 504.20s
+Best EMA -- epoch=7, val MAE: 9.36251, test MAE: 9.66036
+
+Epoch: [8][0/1718] 	 loss: 0.49531, MAE: 3.74140, time/step=665ms, lr=4.92e-04
+Epoch: [8][100/1718] 	 loss: 0.76133, MAE: 6.49792, time/step=271ms, lr=4.92e-04
+Epoch: [8][200/1718] 	 loss: 0.75739, MAE: 6.46643, time/step=268ms, lr=4.92e-04
+Epoch: [8][300/1718] 	 loss: 0.76585, MAE: 6.57179, time/step=266ms, lr=4.92e-04
+Epoch: [8][400/1718] 	 loss: 0.77037, MAE: 6.62370, time/step=264ms, lr=4.92e-04
+Epoch: [8][500/1718] 	 loss: 0.77182, MAE: 6.64288, time/step=265ms, lr=4.92e-04
+Epoch: [8][600/1718] 	 loss: 0.77491, MAE: 6.67432, time/step=265ms, lr=4.92e-04
+Epoch: [8][700/1718] 	 loss: 0.77603, MAE: 6.68418, time/step=263ms, lr=4.92e-04
+Epoch: [8][800/1718] 	 loss: 0.77605, MAE: 6.68387, time/step=263ms, lr=4.92e-04
+Epoch: [8][900/1718] 	 loss: 0.77931, MAE: 6.71795, time/step=263ms, lr=4.92e-04
+Epoch: [8][1000/1718] 	 loss: 0.78480, MAE: 6.77288, time/step=264ms, lr=4.92e-04
+Epoch: [8][1100/1718] 	 loss: 0.77901, MAE: 6.71186, time/step=263ms, lr=4.92e-04
+Epoch: [8][1200/1718] 	 loss: 0.78024, MAE: 6.72512, time/step=264ms, lr=4.92e-04
+Epoch: [8][1300/1718] 	 loss: 0.77555, MAE: 6.67913, time/step=263ms, lr=4.92e-04
+Epoch: [8][1400/1718] 	 loss: 0.77891, MAE: 6.71741, time/step=263ms, lr=4.92e-04
+Epoch: [8][1500/1718] 	 loss: 0.78105, MAE: 6.74063, time/step=263ms, lr=4.92e-04
+Epoch: [8][1600/1718] 	 loss: 0.78191, MAE: 6.75009, time/step=263ms, lr=4.92e-04
+Epoch: [8][1700/1718] 	 loss: 0.78609, MAE: 6.79230, time/step=263ms, lr=4.92e-04
+Epoch: [8][1717/1718] 	 loss: 0.78694, MAE: 6.80058, time/step=262ms, lr=4.92e-04
+Epoch: [9] Target: [7] train MAE: 6.80058, val MAE: 7.49930, test MAE: 7.12507, Time: 479.06s
+Best -- epoch=7, train MAE: 7.08113, val MAE: 6.38927, test MAE: 6.92290
+
+Epoch: [9] Target: [7] EMA val MAE: 8.42368, EMA test MAE: 7.96710, Time: 506.96s
+Best EMA -- epoch=9, val MAE: 8.42368, test MAE: 7.96710
+
+Epoch: [9][0/1718] 	 loss: 0.41450, MAE: 2.90692, time/step=607ms, lr=4.90e-04
+Epoch: [9][100/1718] 	 loss: 0.74021, MAE: 6.29681, time/step=265ms, lr=4.90e-04
+Epoch: [9][200/1718] 	 loss: 0.76353, MAE: 6.54477, time/step=261ms, lr=4.90e-04
+Epoch: [9][300/1718] 	 loss: 0.75343, MAE: 6.44655, time/step=259ms, lr=4.90e-04
+Epoch: [9][400/1718] 	 loss: 0.76235, MAE: 6.54232, time/step=261ms, lr=4.90e-04
+Epoch: [9][500/1718] 	 loss: 0.77887, MAE: 6.71052, time/step=261ms, lr=4.90e-04
+Epoch: [9][600/1718] 	 loss: 0.77795, MAE: 6.69666, time/step=261ms, lr=4.90e-04
+Epoch: [9][700/1718] 	 loss: 0.77339, MAE: 6.64679, time/step=262ms, lr=4.90e-04
+Epoch: [9][800/1718] 	 loss: 0.77836, MAE: 6.69716, time/step=262ms, lr=4.90e-04
+Epoch: [9][900/1718] 	 loss: 0.78421, MAE: 6.75555, time/step=263ms, lr=4.90e-04
+Epoch: [9][1000/1718] 	 loss: 0.78679, MAE: 6.77846, time/step=263ms, lr=4.90e-04
+Epoch: [9][1100/1718] 	 loss: 0.78055, MAE: 6.71163, time/step=263ms, lr=4.90e-04
+Epoch: [9][1200/1718] 	 loss: 0.78663, MAE: 6.77169, time/step=263ms, lr=4.90e-04
+Epoch: [9][1300/1718] 	 loss: 0.78694, MAE: 6.77124, time/step=263ms, lr=4.90e-04
+Epoch: [9][1400/1718] 	 loss: 0.78628, MAE: 6.76255, time/step=263ms, lr=4.90e-04
+Epoch: [9][1500/1718] 	 loss: 0.78321, MAE: 6.72933, time/step=263ms, lr=4.90e-04
+Epoch: [9][1600/1718] 	 loss: 0.78326, MAE: 6.72986, time/step=263ms, lr=4.90e-04
+Epoch: [9][1700/1718] 	 loss: 0.77850, MAE: 6.68168, time/step=263ms, lr=4.90e-04
+Epoch: [9][1717/1718] 	 loss: 0.77827, MAE: 6.67960, time/step=263ms, lr=4.90e-04
+Epoch: [10] Target: [7] train MAE: 6.67960, val MAE: 6.66843, test MAE: 7.45420, Time: 480.22s
+Best -- epoch=7, train MAE: 7.08113, val MAE: 6.38927, test MAE: 6.92290
+
+Epoch: [10] Target: [7] EMA val MAE: 8.21743, EMA test MAE: 7.93462, Time: 508.08s
+Best EMA -- epoch=10, val MAE: 8.21743, test MAE: 7.93462
+
+Epoch: [10][0/1718] 	 loss: 0.79233, MAE: 6.85389, time/step=625ms, lr=4.88e-04
+Epoch: [10][100/1718] 	 loss: 0.74000, MAE: 6.32297, time/step=270ms, lr=4.88e-04
+Epoch: [10][200/1718] 	 loss: 0.73292, MAE: 6.26174, time/step=267ms, lr=4.88e-04
+Epoch: [10][300/1718] 	 loss: 0.74078, MAE: 6.34835, time/step=265ms, lr=4.88e-04
+Epoch: [10][400/1718] 	 loss: 0.74520, MAE: 6.39841, time/step=265ms, lr=4.88e-04
+Epoch: [10][500/1718] 	 loss: 0.74027, MAE: 6.35138, time/step=263ms, lr=4.88e-04
+Epoch: [10][600/1718] 	 loss: 0.75164, MAE: 6.46550, time/step=263ms, lr=4.88e-04
+Epoch: [10][700/1718] 	 loss: 0.75918, MAE: 6.54126, time/step=263ms, lr=4.88e-04
+Epoch: [10][800/1718] 	 loss: 0.75908, MAE: 6.53519, time/step=262ms, lr=4.88e-04
+Epoch: [10][900/1718] 	 loss: 0.75415, MAE: 6.48180, time/step=262ms, lr=4.88e-04
+Epoch: [10][1000/1718] 	 loss: 0.75211, MAE: 6.45993, time/step=263ms, lr=4.88e-04
+Epoch: [10][1100/1718] 	 loss: 0.75972, MAE: 6.53719, time/step=263ms, lr=4.88e-04
+Epoch: [10][1200/1718] 	 loss: 0.76732, MAE: 6.61022, time/step=263ms, lr=4.88e-04
+Epoch: [10][1300/1718] 	 loss: 0.76950, MAE: 6.62524, time/step=262ms, lr=4.88e-04
+Epoch: [10][1400/1718] 	 loss: 0.76914, MAE: 6.61585, time/step=262ms, lr=4.88e-04
+Epoch: [10][1500/1718] 	 loss: 0.76565, MAE: 6.57602, time/step=262ms, lr=4.88e-04
+Epoch: [10][1600/1718] 	 loss: 0.76920, MAE: 6.60830, time/step=262ms, lr=4.88e-04
+Epoch: [10][1700/1718] 	 loss: 0.77306, MAE: 6.64233, time/step=262ms, lr=4.88e-04
+Epoch: [10][1717/1718] 	 loss: 0.77253, MAE: 6.63587, time/step=262ms, lr=4.88e-04
+Epoch: [11] Target: [7] train MAE: 6.63587, val MAE: 6.53123, test MAE: 6.94184, Time: 477.93s
+Best -- epoch=7, train MAE: 7.08113, val MAE: 6.38927, test MAE: 6.92290
+
+Epoch: [11] Target: [7] EMA val MAE: 7.70772, EMA test MAE: 7.52110, Time: 505.88s
+Best EMA -- epoch=11, val MAE: 7.70772, test MAE: 7.52110
+
+Epoch: [11][0/1718] 	 loss: 0.89374, MAE: 7.78798, time/step=694ms, lr=4.86e-04
+Epoch: [11][100/1718] 	 loss: 0.81122, MAE: 6.94775, time/step=259ms, lr=4.86e-04
+Epoch: [11][200/1718] 	 loss: 0.79673, MAE: 6.79131, time/step=260ms, lr=4.86e-04
+Epoch: [11][300/1718] 	 loss: 0.78319, MAE: 6.65045, time/step=261ms, lr=4.86e-04
+Epoch: [11][400/1718] 	 loss: 0.79078, MAE: 6.72924, time/step=262ms, lr=4.86e-04
+Epoch: [11][500/1718] 	 loss: 0.78994, MAE: 6.71532, time/step=263ms, lr=4.86e-04
+Epoch: [11][600/1718] 	 loss: 0.78801, MAE: 6.69405, time/step=262ms, lr=4.86e-04
+Epoch: [11][700/1718] 	 loss: 0.78484, MAE: 6.65957, time/step=262ms, lr=4.86e-04
+Epoch: [11][800/1718] 	 loss: 0.78983, MAE: 6.71051, time/step=262ms, lr=4.86e-04
+Epoch: [11][900/1718] 	 loss: 0.78933, MAE: 6.70337, time/step=262ms, lr=4.86e-04
+Epoch: [11][1000/1718] 	 loss: 0.79101, MAE: 6.71826, time/step=262ms, lr=4.86e-04
+Epoch: [11][1100/1718] 	 loss: 0.79007, MAE: 6.70640, time/step=262ms, lr=4.86e-04
+Epoch: [11][1200/1718] 	 loss: 0.78130, MAE: 6.61692, time/step=262ms, lr=4.86e-04
+Epoch: [11][1300/1718] 	 loss: 0.77523, MAE: 6.55776, time/step=262ms, lr=4.86e-04
+Epoch: [11][1400/1718] 	 loss: 0.78034, MAE: 6.61338, time/step=262ms, lr=4.86e-04
+Epoch: [11][1500/1718] 	 loss: 0.77792, MAE: 6.58938, time/step=262ms, lr=4.86e-04
+Epoch: [11][1600/1718] 	 loss: 0.77555, MAE: 6.56617, time/step=262ms, lr=4.86e-04
+Epoch: [11][1700/1718] 	 loss: 0.77887, MAE: 6.60096, time/step=262ms, lr=4.86e-04
+Epoch: [11][1717/1718] 	 loss: 0.77853, MAE: 6.59744, time/step=262ms, lr=4.86e-04
+Epoch: [12] Target: [7] train MAE: 6.59744, val MAE: 7.00284, test MAE: 6.18971, Time: 478.02s
+Best -- epoch=7, train MAE: 7.08113, val MAE: 6.38927, test MAE: 6.92290
+
+Epoch: [12] Target: [7] EMA val MAE: 7.42651, EMA test MAE: 7.24076, Time: 506.02s
+Best EMA -- epoch=12, val MAE: 7.42651, test MAE: 7.24076
+
+Epoch: [12][0/1718] 	 loss: 1.59905, MAE: 15.07303, time/step=675ms, lr=4.83e-04
+Epoch: [12][100/1718] 	 loss: 0.76382, MAE: 6.45583, time/step=265ms, lr=4.83e-04
+Epoch: [12][200/1718] 	 loss: 0.75416, MAE: 6.35826, time/step=267ms, lr=4.83e-04
+Epoch: [12][300/1718] 	 loss: 0.76845, MAE: 6.51176, time/step=265ms, lr=4.83e-04
+Epoch: [12][400/1718] 	 loss: 0.75838, MAE: 6.41213, time/step=263ms, lr=4.83e-04
+Epoch: [12][500/1718] 	 loss: 0.76380, MAE: 6.47272, time/step=263ms, lr=4.83e-04
+Epoch: [12][600/1718] 	 loss: 0.77082, MAE: 6.54494, time/step=262ms, lr=4.83e-04
+Epoch: [12][700/1718] 	 loss: 0.76418, MAE: 6.47553, time/step=262ms, lr=4.83e-04
+Epoch: [12][800/1718] 	 loss: 0.75887, MAE: 6.42386, time/step=262ms, lr=4.83e-04
+Epoch: [12][900/1718] 	 loss: 0.75750, MAE: 6.41186, time/step=262ms, lr=4.83e-04
+Epoch: [12][1000/1718] 	 loss: 0.76121, MAE: 6.45262, time/step=262ms, lr=4.83e-04
+Epoch: [12][1100/1718] 	 loss: 0.75749, MAE: 6.41626, time/step=261ms, lr=4.83e-04
+Epoch: [12][1200/1718] 	 loss: 0.76291, MAE: 6.47313, time/step=262ms, lr=4.83e-04
+Epoch: [12][1300/1718] 	 loss: 0.75876, MAE: 6.42969, time/step=262ms, lr=4.83e-04
+Epoch: [12][1400/1718] 	 loss: 0.75875, MAE: 6.42965, time/step=262ms, lr=4.83e-04
+Epoch: [12][1500/1718] 	 loss: 0.75542, MAE: 6.39580, time/step=262ms, lr=4.83e-04
+Epoch: [12][1600/1718] 	 loss: 0.75317, MAE: 6.37399, time/step=262ms, lr=4.83e-04
+Epoch: [12][1700/1718] 	 loss: 0.75332, MAE: 6.37705, time/step=262ms, lr=4.83e-04
+Epoch: [12][1717/1718] 	 loss: 0.75391, MAE: 6.38334, time/step=262ms, lr=4.83e-04
+Epoch: [13] Target: [7] train MAE: 6.38334, val MAE: 6.04946, test MAE: 6.16227, Time: 477.59s
+Best -- epoch=13, train MAE: 6.38334, val MAE: 6.04946, test MAE: 6.16227
+
+Epoch: [13] Target: [7] EMA val MAE: 7.22415, EMA test MAE: 7.26872, Time: 505.59s
+Best EMA -- epoch=13, val MAE: 7.22415, test MAE: 7.26872
+
+Epoch: [13][0/1718] 	 loss: 0.43873, MAE: 3.15162, time/step=663ms, lr=4.80e-04
+Epoch: [13][100/1718] 	 loss: 0.83273, MAE: 7.20074, time/step=266ms, lr=4.80e-04
+Epoch: [13][200/1718] 	 loss: 0.84409, MAE: 7.30024, time/step=263ms, lr=4.80e-04
+Epoch: [13][300/1718] 	 loss: 0.82789, MAE: 7.11546, time/step=261ms, lr=4.80e-04
+Epoch: [13][400/1718] 	 loss: 0.83253, MAE: 7.15291, time/step=260ms, lr=4.80e-04
+Epoch: [13][500/1718] 	 loss: 0.80940, MAE: 6.90813, time/step=259ms, lr=4.80e-04
+Epoch: [13][600/1718] 	 loss: 0.80260, MAE: 6.83541, time/step=262ms, lr=4.80e-04
+Epoch: [13][700/1718] 	 loss: 0.80405, MAE: 6.84957, time/step=261ms, lr=4.80e-04
+Epoch: [13][800/1718] 	 loss: 0.79827, MAE: 6.78691, time/step=262ms, lr=4.80e-04
+Epoch: [13][900/1718] 	 loss: 0.79740, MAE: 6.77684, time/step=262ms, lr=4.80e-04
+Epoch: [13][1000/1718] 	 loss: 0.79155, MAE: 6.71510, time/step=262ms, lr=4.80e-04
+Epoch: [13][1100/1718] 	 loss: 0.78612, MAE: 6.65929, time/step=262ms, lr=4.80e-04
+Epoch: [13][1200/1718] 	 loss: 0.78037, MAE: 6.60150, time/step=261ms, lr=4.80e-04
+Epoch: [13][1300/1718] 	 loss: 0.77546, MAE: 6.55469, time/step=261ms, lr=4.80e-04
+Epoch: [13][1400/1718] 	 loss: 0.77523, MAE: 6.55645, time/step=261ms, lr=4.80e-04
+Epoch: [13][1500/1718] 	 loss: 0.77303, MAE: 6.53677, time/step=261ms, lr=4.80e-04
+Epoch: [13][1600/1718] 	 loss: 0.77538, MAE: 6.56321, time/step=261ms, lr=4.80e-04
+Epoch: [13][1700/1718] 	 loss: 0.77401, MAE: 6.54952, time/step=261ms, lr=4.80e-04
+Epoch: [13][1717/1718] 	 loss: 0.77392, MAE: 6.54850, time/step=261ms, lr=4.80e-04
+Epoch: [14] Target: [7] train MAE: 6.54850, val MAE: 6.37522, test MAE: 6.27465, Time: 476.63s
+Best -- epoch=13, train MAE: 6.38334, val MAE: 6.04946, test MAE: 6.16227
+
+Epoch: [14] Target: [7] EMA val MAE: 7.58338, EMA test MAE: 7.16234, Time: 504.57s
+Best EMA -- epoch=13, val MAE: 7.22415, test MAE: 7.26872
+
+Epoch: [14][0/1718] 	 loss: 0.51601, MAE: 3.88243, time/step=638ms, lr=4.77e-04
+Epoch: [14][100/1718] 	 loss: 0.72123, MAE: 6.00489, time/step=266ms, lr=4.77e-04
+Epoch: [14][200/1718] 	 loss: 0.75490, MAE: 6.35927, time/step=266ms, lr=4.77e-04
+Epoch: [14][300/1718] 	 loss: 0.76991, MAE: 6.51050, time/step=266ms, lr=4.77e-04
+Epoch: [14][400/1718] 	 loss: 0.77348, MAE: 6.54212, time/step=266ms, lr=4.77e-04
+Epoch: [14][500/1718] 	 loss: 0.76191, MAE: 6.42301, time/step=266ms, lr=4.77e-04
+Epoch: [14][600/1718] 	 loss: 0.74968, MAE: 6.30123, time/step=266ms, lr=4.77e-04
+Epoch: [14][700/1718] 	 loss: 0.75619, MAE: 6.37197, time/step=265ms, lr=4.77e-04
+Epoch: [14][800/1718] 	 loss: 0.76388, MAE: 6.45028, time/step=265ms, lr=4.77e-04
+Epoch: [14][900/1718] 	 loss: 0.76326, MAE: 6.44102, time/step=265ms, lr=4.77e-04
+Epoch: [14][1000/1718] 	 loss: 0.76684, MAE: 6.47655, time/step=264ms, lr=4.77e-04
+Epoch: [14][1100/1718] 	 loss: 0.76559, MAE: 6.46216, time/step=264ms, lr=4.77e-04
+Epoch: [14][1200/1718] 	 loss: 0.76270, MAE: 6.43158, time/step=264ms, lr=4.77e-04
+Epoch: [14][1300/1718] 	 loss: 0.76377, MAE: 6.44188, time/step=264ms, lr=4.77e-04
+Epoch: [14][1400/1718] 	 loss: 0.76689, MAE: 6.47260, time/step=264ms, lr=4.77e-04
+Epoch: [14][1500/1718] 	 loss: 0.76544, MAE: 6.45473, time/step=265ms, lr=4.77e-04
+Epoch: [14][1600/1718] 	 loss: 0.77082, MAE: 6.50799, time/step=264ms, lr=4.77e-04
+Epoch: [14][1700/1718] 	 loss: 0.76836, MAE: 6.48082, time/step=264ms, lr=4.77e-04
+Epoch: [14][1717/1718] 	 loss: 0.76751, MAE: 6.47184, time/step=264ms, lr=4.77e-04
+Epoch: [15] Target: [7] train MAE: 6.47184, val MAE: 5.95563, test MAE: 6.14523, Time: 482.20s
+Best -- epoch=15, train MAE: 6.47184, val MAE: 5.95563, test MAE: 6.14523
+
+Epoch: [15] Target: [7] EMA val MAE: 6.79100, EMA test MAE: 7.00532, Time: 510.11s
+Best EMA -- epoch=15, val MAE: 6.79100, test MAE: 7.00532
+
+Epoch: [15][0/1718] 	 loss: 0.76173, MAE: 6.39980, time/step=681ms, lr=4.73e-04
+Epoch: [15][100/1718] 	 loss: 0.83214, MAE: 7.11912, time/step=267ms, lr=4.73e-04
+Epoch: [15][200/1718] 	 loss: 0.81573, MAE: 6.93308, time/step=266ms, lr=4.73e-04
+Epoch: [15][300/1718] 	 loss: 0.78807, MAE: 6.64169, time/step=265ms, lr=4.73e-04
+Epoch: [15][400/1718] 	 loss: 0.77252, MAE: 6.48395, time/step=266ms, lr=4.73e-04
+Epoch: [15][500/1718] 	 loss: 0.75814, MAE: 6.34489, time/step=265ms, lr=4.73e-04
+Epoch: [15][600/1718] 	 loss: 0.75018, MAE: 6.27310, time/step=265ms, lr=4.73e-04
+Epoch: [15][700/1718] 	 loss: 0.74781, MAE: 6.25771, time/step=265ms, lr=4.73e-04
+Epoch: [15][800/1718] 	 loss: 0.74567, MAE: 6.24399, time/step=264ms, lr=4.73e-04
+Epoch: [15][900/1718] 	 loss: 0.74851, MAE: 6.27801, time/step=264ms, lr=4.73e-04
+Epoch: [15][1000/1718] 	 loss: 0.74945, MAE: 6.29004, time/step=264ms, lr=4.73e-04
+Epoch: [15][1100/1718] 	 loss: 0.75859, MAE: 6.38517, time/step=264ms, lr=4.73e-04
+Epoch: [15][1200/1718] 	 loss: 0.75598, MAE: 6.35719, time/step=264ms, lr=4.73e-04
+Epoch: [15][1300/1718] 	 loss: 0.75812, MAE: 6.37805, time/step=264ms, lr=4.73e-04
+Epoch: [15][1400/1718] 	 loss: 0.75998, MAE: 6.39587, time/step=264ms, lr=4.73e-04
+Epoch: [15][1500/1718] 	 loss: 0.75944, MAE: 6.38935, time/step=263ms, lr=4.73e-04
+Epoch: [15][1600/1718] 	 loss: 0.75868, MAE: 6.38084, time/step=263ms, lr=4.73e-04
+Epoch: [15][1700/1718] 	 loss: 0.75908, MAE: 6.38391, time/step=263ms, lr=4.73e-04
+Epoch: [15][1717/1718] 	 loss: 0.75875, MAE: 6.38039, time/step=263ms, lr=4.73e-04
+Epoch: [16] Target: [7] train MAE: 6.38039, val MAE: 6.79033, test MAE: 6.24481, Time: 480.66s
+Best -- epoch=15, train MAE: 6.47184, val MAE: 5.95563, test MAE: 6.14523
+
+Epoch: [16] Target: [7] EMA val MAE: 6.75774, EMA test MAE: 6.41087, Time: 508.58s
+Best EMA -- epoch=16, val MAE: 6.75774, test MAE: 6.41087
+
+Epoch: [16][0/1718] 	 loss: 0.98506, MAE: 8.70905, time/step=656ms, lr=4.70e-04
+Epoch: [16][100/1718] 	 loss: 0.78380, MAE: 6.62806, time/step=264ms, lr=4.70e-04
+Epoch: [16][200/1718] 	 loss: 0.77016, MAE: 6.48390, time/step=267ms, lr=4.70e-04
+Epoch: [16][300/1718] 	 loss: 0.78485, MAE: 6.63155, time/step=264ms, lr=4.70e-04
+Epoch: [16][400/1718] 	 loss: 0.77779, MAE: 6.55231, time/step=264ms, lr=4.70e-04
+Epoch: [16][500/1718] 	 loss: 0.78360, MAE: 6.61141, time/step=263ms, lr=4.70e-04
+Epoch: [16][600/1718] 	 loss: 0.78246, MAE: 6.59640, time/step=263ms, lr=4.70e-04
+Epoch: [16][700/1718] 	 loss: 0.77234, MAE: 6.49047, time/step=263ms, lr=4.70e-04
+Epoch: [16][800/1718] 	 loss: 0.76260, MAE: 6.39290, time/step=263ms, lr=4.70e-04
+Epoch: [16][900/1718] 	 loss: 0.76384, MAE: 6.41122, time/step=262ms, lr=4.70e-04
+Epoch: [16][1000/1718] 	 loss: 0.76048, MAE: 6.38085, time/step=262ms, lr=4.70e-04
+Epoch: [16][1100/1718] 	 loss: 0.75910, MAE: 6.37179, time/step=262ms, lr=4.70e-04
+Epoch: [16][1200/1718] 	 loss: 0.76338, MAE: 6.41955, time/step=262ms, lr=4.70e-04
+Epoch: [16][1300/1718] 	 loss: 0.76731, MAE: 6.45936, time/step=262ms, lr=4.70e-04
+Epoch: [16][1400/1718] 	 loss: 0.76250, MAE: 6.40881, time/step=262ms, lr=4.70e-04
+Epoch: [16][1500/1718] 	 loss: 0.76667, MAE: 6.45133, time/step=262ms, lr=4.70e-04
+Epoch: [16][1600/1718] 	 loss: 0.76308, MAE: 6.41238, time/step=263ms, lr=4.70e-04
+Epoch: [16][1700/1718] 	 loss: 0.76309, MAE: 6.41262, time/step=263ms, lr=4.70e-04
+Epoch: [16][1717/1718] 	 loss: 0.76332, MAE: 6.41502, time/step=263ms, lr=4.70e-04
+Epoch: [17] Target: [7] train MAE: 6.41502, val MAE: 6.78256, test MAE: 6.53852, Time: 480.53s
+Best -- epoch=15, train MAE: 6.47184, val MAE: 5.95563, test MAE: 6.14523
+
+Epoch: [17] Target: [7] EMA val MAE: 6.72963, EMA test MAE: 6.65407, Time: 508.63s
+Best EMA -- epoch=17, val MAE: 6.72963, test MAE: 6.65407
+
+Epoch: [17][0/1718] 	 loss: 0.59073, MAE: 4.62853, time/step=663ms, lr=4.66e-04
+Epoch: [17][100/1718] 	 loss: 0.78869, MAE: 6.66809, time/step=268ms, lr=4.66e-04
+Epoch: [17][200/1718] 	 loss: 0.74478, MAE: 6.22085, time/step=268ms, lr=4.66e-04
+Epoch: [17][300/1718] 	 loss: 0.72783, MAE: 6.05661, time/step=266ms, lr=4.66e-04
+Epoch: [17][400/1718] 	 loss: 0.73050, MAE: 6.09601, time/step=265ms, lr=4.66e-04
+Epoch: [17][500/1718] 	 loss: 0.75529, MAE: 6.35169, time/step=265ms, lr=4.66e-04
+Epoch: [17][600/1718] 	 loss: 0.75915, MAE: 6.38526, time/step=265ms, lr=4.66e-04
+Epoch: [17][700/1718] 	 loss: 0.75636, MAE: 6.35131, time/step=265ms, lr=4.66e-04
+Epoch: [17][800/1718] 	 loss: 0.75889, MAE: 6.37257, time/step=265ms, lr=4.66e-04
+Epoch: [17][900/1718] 	 loss: 0.75649, MAE: 6.34598, time/step=265ms, lr=4.66e-04
+Epoch: [17][1000/1718] 	 loss: 0.75428, MAE: 6.32363, time/step=265ms, lr=4.66e-04
+Epoch: [17][1100/1718] 	 loss: 0.75178, MAE: 6.29985, time/step=265ms, lr=4.66e-04
+Epoch: [17][1200/1718] 	 loss: 0.75400, MAE: 6.32472, time/step=266ms, lr=4.66e-04
+Epoch: [17][1300/1718] 	 loss: 0.75091, MAE: 6.29322, time/step=266ms, lr=4.66e-04
+Epoch: [17][1400/1718] 	 loss: 0.75177, MAE: 6.30297, time/step=266ms, lr=4.66e-04
+Epoch: [17][1500/1718] 	 loss: 0.76113, MAE: 6.39699, time/step=266ms, lr=4.66e-04
+Epoch: [17][1600/1718] 	 loss: 0.75765, MAE: 6.35729, time/step=265ms, lr=4.66e-04
+Epoch: [17][1700/1718] 	 loss: 0.75984, MAE: 6.37714, time/step=265ms, lr=4.66e-04
+Epoch: [17][1717/1718] 	 loss: 0.75849, MAE: 6.36281, time/step=265ms, lr=4.66e-04
+Epoch: [18] Target: [7] train MAE: 6.36281, val MAE: 6.44328, test MAE: 6.31347, Time: 483.83s
+Best -- epoch=15, train MAE: 6.47184, val MAE: 5.95563, test MAE: 6.14523
+
+Epoch: [18] Target: [7] EMA val MAE: 6.93126, EMA test MAE: 6.37396, Time: 511.90s
+Best EMA -- epoch=17, val MAE: 6.72963, test MAE: 6.65407
+
+Epoch: [18][0/1718] 	 loss: 0.93111, MAE: 8.10864, time/step=676ms, lr=4.62e-04
+Epoch: [18][100/1718] 	 loss: 0.77227, MAE: 6.46742, time/step=270ms, lr=4.62e-04
+Epoch: [18][200/1718] 	 loss: 0.77585, MAE: 6.50863, time/step=266ms, lr=4.62e-04
+Epoch: [18][300/1718] 	 loss: 0.75462, MAE: 6.29319, time/step=265ms, lr=4.62e-04
+Epoch: [18][400/1718] 	 loss: 0.74704, MAE: 6.22165, time/step=265ms, lr=4.62e-04
+Epoch: [18][500/1718] 	 loss: 0.74615, MAE: 6.21693, time/step=265ms, lr=4.62e-04
+Epoch: [18][600/1718] 	 loss: 0.74901, MAE: 6.24908, time/step=265ms, lr=4.62e-04
+Epoch: [18][700/1718] 	 loss: 0.76053, MAE: 6.36789, time/step=264ms, lr=4.62e-04
+Epoch: [18][800/1718] 	 loss: 0.75613, MAE: 6.32009, time/step=264ms, lr=4.62e-04
+Epoch: [18][900/1718] 	 loss: 0.75647, MAE: 6.32443, time/step=264ms, lr=4.62e-04
+Epoch: [18][1000/1718] 	 loss: 0.75596, MAE: 6.31849, time/step=264ms, lr=4.62e-04
+Epoch: [18][1100/1718] 	 loss: 0.75971, MAE: 6.35533, time/step=264ms, lr=4.62e-04
+Epoch: [18][1200/1718] 	 loss: 0.76386, MAE: 6.39586, time/step=264ms, lr=4.62e-04
+Epoch: [18][1300/1718] 	 loss: 0.76131, MAE: 6.36651, time/step=265ms, lr=4.62e-04
+Epoch: [18][1400/1718] 	 loss: 0.76264, MAE: 6.37761, time/step=265ms, lr=4.62e-04
+Epoch: [18][1500/1718] 	 loss: 0.76785, MAE: 6.42851, time/step=264ms, lr=4.62e-04
+Epoch: [18][1600/1718] 	 loss: 0.76389, MAE: 6.38504, time/step=264ms, lr=4.62e-04
+Epoch: [18][1700/1718] 	 loss: 0.76475, MAE: 6.39251, time/step=264ms, lr=4.62e-04
+Epoch: [18][1717/1718] 	 loss: 0.76313, MAE: 6.37537, time/step=264ms, lr=4.62e-04
+Epoch: [19] Target: [7] train MAE: 6.37537, val MAE: 6.38938, test MAE: 6.38000, Time: 482.35s
+Best -- epoch=15, train MAE: 6.47184, val MAE: 5.95563, test MAE: 6.14523
+
+Epoch: [19] Target: [7] EMA val MAE: 6.59602, EMA test MAE: 7.07027, Time: 510.45s
+Best EMA -- epoch=19, val MAE: 6.59602, test MAE: 7.07027
+
+Epoch: [19][0/1718] 	 loss: 0.37556, MAE: 2.33981, time/step=684ms, lr=4.58e-04
+Epoch: [19][100/1718] 	 loss: 0.71838, MAE: 5.89834, time/step=267ms, lr=4.58e-04
+Epoch: [19][200/1718] 	 loss: 0.74409, MAE: 6.17136, time/step=266ms, lr=4.58e-04
+Epoch: [19][300/1718] 	 loss: 0.75517, MAE: 6.28411, time/step=265ms, lr=4.58e-04
+Epoch: [19][400/1718] 	 loss: 0.74067, MAE: 6.13883, time/step=265ms, lr=4.58e-04
+Epoch: [19][500/1718] 	 loss: 0.73843, MAE: 6.12094, time/step=265ms, lr=4.58e-04
+Epoch: [19][600/1718] 	 loss: 0.73329, MAE: 6.07348, time/step=265ms, lr=4.58e-04
+Epoch: [19][700/1718] 	 loss: 0.73542, MAE: 6.10200, time/step=265ms, lr=4.58e-04
+Epoch: [19][800/1718] 	 loss: 0.73840, MAE: 6.13461, time/step=264ms, lr=4.58e-04
+Epoch: [19][900/1718] 	 loss: 0.74369, MAE: 6.18849, time/step=264ms, lr=4.58e-04
+Epoch: [19][1000/1718] 	 loss: 0.73977, MAE: 6.14713, time/step=264ms, lr=4.58e-04
+Epoch: [19][1100/1718] 	 loss: 0.73365, MAE: 6.08561, time/step=264ms, lr=4.58e-04
+Epoch: [19][1200/1718] 	 loss: 0.73380, MAE: 6.09186, time/step=264ms, lr=4.58e-04
+Epoch: [19][1300/1718] 	 loss: 0.74067, MAE: 6.16536, time/step=265ms, lr=4.58e-04
+Epoch: [19][1400/1718] 	 loss: 0.74156, MAE: 6.17565, time/step=265ms, lr=4.58e-04
+Epoch: [19][1500/1718] 	 loss: 0.74391, MAE: 6.19870, time/step=264ms, lr=4.58e-04
+Epoch: [19][1600/1718] 	 loss: 0.74593, MAE: 6.21804, time/step=265ms, lr=4.58e-04
+Epoch: [19][1700/1718] 	 loss: 0.74406, MAE: 6.19726, time/step=265ms, lr=4.58e-04
+Epoch: [19][1717/1718] 	 loss: 0.74444, MAE: 6.20095, time/step=265ms, lr=4.58e-04
+Epoch: [20] Target: [7] train MAE: 6.20095, val MAE: 6.33913, test MAE: 5.90018, Time: 482.74s
+Best -- epoch=15, train MAE: 6.47184, val MAE: 5.95563, test MAE: 6.14523
+
+Epoch: [20] Target: [7] EMA val MAE: 5.99333, EMA test MAE: 6.16078, Time: 510.83s
+Best EMA -- epoch=20, val MAE: 5.99333, test MAE: 6.16078
+
+Epoch: [20][0/1718] 	 loss: 0.74890, MAE: 6.23070, time/step=725ms, lr=4.53e-04
+Epoch: [20][100/1718] 	 loss: 0.77554, MAE: 6.49970, time/step=268ms, lr=4.53e-04
+Epoch: [20][200/1718] 	 loss: 0.76094, MAE: 6.34591, time/step=266ms, lr=4.53e-04
+Epoch: [20][300/1718] 	 loss: 0.73065, MAE: 6.03790, time/step=266ms, lr=4.53e-04
+Epoch: [20][400/1718] 	 loss: 0.73729, MAE: 6.11697, time/step=266ms, lr=4.53e-04
+Epoch: [20][500/1718] 	 loss: 0.73574, MAE: 6.10928, time/step=266ms, lr=4.53e-04
+Epoch: [20][600/1718] 	 loss: 0.73566, MAE: 6.11039, time/step=266ms, lr=4.53e-04
+Epoch: [20][700/1718] 	 loss: 0.74345, MAE: 6.19360, time/step=265ms, lr=4.53e-04
+Epoch: [20][800/1718] 	 loss: 0.74225, MAE: 6.17985, time/step=265ms, lr=4.53e-04
+Epoch: [20][900/1718] 	 loss: 0.73126, MAE: 6.06775, time/step=266ms, lr=4.53e-04
+Epoch: [20][1000/1718] 	 loss: 0.73580, MAE: 6.11950, time/step=267ms, lr=4.53e-04
+Epoch: [20][1100/1718] 	 loss: 0.74448, MAE: 6.20808, time/step=266ms, lr=4.53e-04
+Epoch: [20][1200/1718] 	 loss: 0.74123, MAE: 6.17181, time/step=266ms, lr=4.53e-04
+Epoch: [20][1300/1718] 	 loss: 0.74095, MAE: 6.16796, time/step=266ms, lr=4.53e-04
+Epoch: [20][1400/1718] 	 loss: 0.73754, MAE: 6.13292, time/step=266ms, lr=4.53e-04
+Epoch: [20][1500/1718] 	 loss: 0.73963, MAE: 6.15562, time/step=265ms, lr=4.53e-04
+Epoch: [20][1600/1718] 	 loss: 0.73545, MAE: 6.11489, time/step=265ms, lr=4.53e-04
+Epoch: [20][1700/1718] 	 loss: 0.73440, MAE: 6.10767, time/step=265ms, lr=4.53e-04
+Epoch: [20][1717/1718] 	 loss: 0.73497, MAE: 6.11424, time/step=265ms, lr=4.53e-04
+Epoch: [21] Target: [7] train MAE: 6.11424, val MAE: 6.12694, test MAE: 6.30661, Time: 483.94s
+Best -- epoch=15, train MAE: 6.47184, val MAE: 5.95563, test MAE: 6.14523
+
+Epoch: [21] Target: [7] EMA val MAE: 6.07189, EMA test MAE: 6.34827, Time: 512.07s
+Best EMA -- epoch=20, val MAE: 5.99333, test MAE: 6.16078
+
+Epoch: [21][0/1718] 	 loss: 0.40479, MAE: 2.76773, time/step=645ms, lr=4.49e-04
+Epoch: [21][100/1718] 	 loss: 0.70531, MAE: 5.88316, time/step=269ms, lr=4.49e-04
+Epoch: [21][200/1718] 	 loss: 0.70832, MAE: 5.91696, time/step=267ms, lr=4.49e-04
+Epoch: [21][300/1718] 	 loss: 0.72664, MAE: 6.10575, time/step=267ms, lr=4.49e-04
+Epoch: [21][400/1718] 	 loss: 0.73772, MAE: 6.21595, time/step=266ms, lr=4.49e-04
+Epoch: [21][500/1718] 	 loss: 0.73525, MAE: 6.17998, time/step=266ms, lr=4.49e-04
+Epoch: [21][600/1718] 	 loss: 0.72563, MAE: 6.07585, time/step=266ms, lr=4.49e-04
+Epoch: [21][700/1718] 	 loss: 0.72464, MAE: 6.06594, time/step=266ms, lr=4.49e-04
+Epoch: [21][800/1718] 	 loss: 0.72665, MAE: 6.08533, time/step=266ms, lr=4.49e-04
+Epoch: [21][900/1718] 	 loss: 0.72333, MAE: 6.04991, time/step=266ms, lr=4.49e-04
+Epoch: [21][1000/1718] 	 loss: 0.73135, MAE: 6.13093, time/step=266ms, lr=4.49e-04
+Epoch: [21][1100/1718] 	 loss: 0.73462, MAE: 6.16007, time/step=265ms, lr=4.49e-04
+Epoch: [21][1200/1718] 	 loss: 0.73313, MAE: 6.14085, time/step=265ms, lr=4.49e-04
+Epoch: [21][1300/1718] 	 loss: 0.73789, MAE: 6.18670, time/step=265ms, lr=4.49e-04
+Epoch: [21][1400/1718] 	 loss: 0.73701, MAE: 6.17464, time/step=265ms, lr=4.49e-04
+Epoch: [21][1500/1718] 	 loss: 0.73894, MAE: 6.19126, time/step=265ms, lr=4.49e-04
+Epoch: [21][1600/1718] 	 loss: 0.74441, MAE: 6.24332, time/step=265ms, lr=4.49e-04
+Epoch: [21][1700/1718] 	 loss: 0.74319, MAE: 6.22567, time/step=265ms, lr=4.49e-04
+Epoch: [21][1717/1718] 	 loss: 0.74448, MAE: 6.23825, time/step=265ms, lr=4.49e-04
+Epoch: [22] Target: [7] train MAE: 6.23825, val MAE: 5.79491, test MAE: 6.32018, Time: 483.28s
+Best -- epoch=22, train MAE: 6.23825, val MAE: 5.79491, test MAE: 6.32018
+
+Epoch: [22] Target: [7] EMA val MAE: 6.36786, EMA test MAE: 5.83795, Time: 511.35s
+Best EMA -- epoch=20, val MAE: 5.99333, test MAE: 6.16078
+
+Epoch: [22][0/1718] 	 loss: 0.43427, MAE: 2.95583, time/step=636ms, lr=4.44e-04
+Epoch: [22][100/1718] 	 loss: 0.71903, MAE: 5.91389, time/step=269ms, lr=4.44e-04
+Epoch: [22][200/1718] 	 loss: 0.70932, MAE: 5.81921, time/step=268ms, lr=4.44e-04
+Epoch: [22][300/1718] 	 loss: 0.71234, MAE: 5.85772, time/step=266ms, lr=4.44e-04
+Epoch: [22][400/1718] 	 loss: 0.71815, MAE: 5.92322, time/step=265ms, lr=4.44e-04
+Epoch: [22][500/1718] 	 loss: 0.72381, MAE: 5.98586, time/step=265ms, lr=4.44e-04
+Epoch: [22][600/1718] 	 loss: 0.72552, MAE: 6.00686, time/step=265ms, lr=4.44e-04
+Epoch: [22][700/1718] 	 loss: 0.73082, MAE: 6.06313, time/step=265ms, lr=4.44e-04
+Epoch: [22][800/1718] 	 loss: 0.73461, MAE: 6.09917, time/step=266ms, lr=4.44e-04
+Epoch: [22][900/1718] 	 loss: 0.73267, MAE: 6.07921, time/step=266ms, lr=4.44e-04
+Epoch: [22][1000/1718] 	 loss: 0.73397, MAE: 6.09123, time/step=266ms, lr=4.44e-04
+Epoch: [22][1100/1718] 	 loss: 0.73739, MAE: 6.12321, time/step=266ms, lr=4.44e-04
+Epoch: [22][1200/1718] 	 loss: 0.73642, MAE: 6.11112, time/step=266ms, lr=4.44e-04
+Epoch: [22][1300/1718] 	 loss: 0.73965, MAE: 6.14359, time/step=265ms, lr=4.44e-04
+Epoch: [22][1400/1718] 	 loss: 0.74124, MAE: 6.15864, time/step=265ms, lr=4.44e-04
+Epoch: [22][1500/1718] 	 loss: 0.73879, MAE: 6.13305, time/step=265ms, lr=4.44e-04
+Epoch: [22][1600/1718] 	 loss: 0.74007, MAE: 6.14619, time/step=265ms, lr=4.44e-04
+Epoch: [22][1700/1718] 	 loss: 0.73630, MAE: 6.10775, time/step=265ms, lr=4.44e-04
+Epoch: [22][1717/1718] 	 loss: 0.73552, MAE: 6.09980, time/step=265ms, lr=4.44e-04
+Epoch: [23] Target: [7] train MAE: 6.09980, val MAE: 6.02274, test MAE: 5.84048, Time: 482.98s
+Best -- epoch=22, train MAE: 6.23825, val MAE: 5.79491, test MAE: 6.32018
+
+Epoch: [23] Target: [7] EMA val MAE: 5.82569, EMA test MAE: 6.78102, Time: 511.15s
+Best EMA -- epoch=23, val MAE: 5.82569, test MAE: 6.78102
+
+Epoch: [23][0/1718] 	 loss: 0.26648, MAE: 1.27412, time/step=655ms, lr=4.39e-04
+Epoch: [23][100/1718] 	 loss: 0.72632, MAE: 6.04032, time/step=269ms, lr=4.39e-04
+Epoch: [23][200/1718] 	 loss: 0.72685, MAE: 6.04379, time/step=267ms, lr=4.39e-04
+Epoch: [23][300/1718] 	 loss: 0.74749, MAE: 6.25515, time/step=265ms, lr=4.39e-04
+Epoch: [23][400/1718] 	 loss: 0.73943, MAE: 6.16753, time/step=265ms, lr=4.39e-04
+Epoch: [23][500/1718] 	 loss: 0.74749, MAE: 6.24565, time/step=267ms, lr=4.39e-04
+Epoch: [23][600/1718] 	 loss: 0.74244, MAE: 6.19009, time/step=266ms, lr=4.39e-04
+Epoch: [23][700/1718] 	 loss: 0.74967, MAE: 6.26354, time/step=266ms, lr=4.39e-04
+Epoch: [23][800/1718] 	 loss: 0.74620, MAE: 6.22364, time/step=266ms, lr=4.39e-04
+Epoch: [23][900/1718] 	 loss: 0.74427, MAE: 6.20362, time/step=266ms, lr=4.39e-04
+Epoch: [23][1000/1718] 	 loss: 0.74425, MAE: 6.20420, time/step=266ms, lr=4.39e-04
+Epoch: [23][1100/1718] 	 loss: 0.73555, MAE: 6.11535, time/step=266ms, lr=4.39e-04
+Epoch: [23][1200/1718] 	 loss: 0.72788, MAE: 6.04080, time/step=266ms, lr=4.39e-04
+Epoch: [23][1300/1718] 	 loss: 0.72867, MAE: 6.05393, time/step=266ms, lr=4.39e-04
+Epoch: [23][1400/1718] 	 loss: 0.72628, MAE: 6.03304, time/step=265ms, lr=4.39e-04
+Epoch: [23][1500/1718] 	 loss: 0.72852, MAE: 6.05832, time/step=265ms, lr=4.39e-04
+Epoch: [23][1600/1718] 	 loss: 0.72873, MAE: 6.06234, time/step=265ms, lr=4.39e-04
+Epoch: [23][1700/1718] 	 loss: 0.72455, MAE: 6.02124, time/step=266ms, lr=4.39e-04
+Epoch: [23][1717/1718] 	 loss: 0.72533, MAE: 6.02979, time/step=266ms, lr=4.39e-04
+Epoch: [24] Target: [7] train MAE: 6.02979, val MAE: 6.37263, test MAE: 6.61240, Time: 484.79s
+Best -- epoch=22, train MAE: 6.23825, val MAE: 5.79491, test MAE: 6.32018
+
+Epoch: [24] Target: [7] EMA val MAE: 6.28322, EMA test MAE: 5.85416, Time: 512.93s
+Best EMA -- epoch=23, val MAE: 5.82569, test MAE: 6.78102
+
+Epoch: [24][0/1718] 	 loss: 0.49517, MAE: 3.69673, time/step=792ms, lr=4.34e-04
+Epoch: [24][100/1718] 	 loss: 0.69077, MAE: 5.72438, time/step=267ms, lr=4.34e-04
+Epoch: [24][200/1718] 	 loss: 0.68806, MAE: 5.70346, time/step=266ms, lr=4.34e-04
+Epoch: [24][300/1718] 	 loss: 0.70659, MAE: 5.89895, time/step=265ms, lr=4.34e-04
+Epoch: [24][400/1718] 	 loss: 0.71172, MAE: 5.94821, time/step=265ms, lr=4.34e-04
+Epoch: [24][500/1718] 	 loss: 0.71609, MAE: 5.98956, time/step=264ms, lr=4.34e-04
+Epoch: [24][600/1718] 	 loss: 0.71883, MAE: 6.01335, time/step=264ms, lr=4.34e-04
+Epoch: [24][700/1718] 	 loss: 0.74567, MAE: 6.28016, time/step=263ms, lr=4.34e-04
+Epoch: [24][800/1718] 	 loss: 0.75481, MAE: 6.35742, time/step=263ms, lr=4.34e-04
+Epoch: [24][900/1718] 	 loss: 0.75244, MAE: 6.31841, time/step=263ms, lr=4.34e-04
+Epoch: [24][1000/1718] 	 loss: 0.74362, MAE: 6.21821, time/step=263ms, lr=4.34e-04
+Epoch: [24][1100/1718] 	 loss: 0.74156, MAE: 6.19228, time/step=263ms, lr=4.34e-04
+Epoch: [24][1200/1718] 	 loss: 0.74180, MAE: 6.19211, time/step=263ms, lr=4.34e-04
+Epoch: [24][1300/1718] 	 loss: 0.74029, MAE: 6.17399, time/step=263ms, lr=4.34e-04
+Epoch: [24][1400/1718] 	 loss: 0.74037, MAE: 6.17256, time/step=263ms, lr=4.34e-04
+Epoch: [24][1500/1718] 	 loss: 0.74491, MAE: 6.21613, time/step=263ms, lr=4.34e-04
+Epoch: [24][1600/1718] 	 loss: 0.74315, MAE: 6.19352, time/step=263ms, lr=4.34e-04
+Epoch: [24][1700/1718] 	 loss: 0.73987, MAE: 6.15715, time/step=263ms, lr=4.34e-04
+Epoch: [24][1717/1718] 	 loss: 0.73934, MAE: 6.15136, time/step=263ms, lr=4.34e-04
+Epoch: [25] Target: [7] train MAE: 6.15136, val MAE: 5.42407, test MAE: 6.22250, Time: 480.79s
+Best -- epoch=25, train MAE: 6.15136, val MAE: 5.42407, test MAE: 6.22250
+
+Epoch: [25] Target: [7] EMA val MAE: 5.85542, EMA test MAE: 5.91262, Time: 508.91s
+Best EMA -- epoch=23, val MAE: 5.82569, test MAE: 6.78102
+
+Epoch: [25][0/1718] 	 loss: 1.20981, MAE: 10.99039, time/step=725ms, lr=4.28e-04
+Epoch: [25][100/1718] 	 loss: 0.76724, MAE: 6.41939, time/step=268ms, lr=4.28e-04
+Epoch: [25][200/1718] 	 loss: 0.74616, MAE: 6.20012, time/step=267ms, lr=4.28e-04
+Epoch: [25][300/1718] 	 loss: 0.74942, MAE: 6.23203, time/step=266ms, lr=4.28e-04
+Epoch: [25][400/1718] 	 loss: 0.72963, MAE: 6.02704, time/step=268ms, lr=4.28e-04
+Epoch: [25][500/1718] 	 loss: 0.72736, MAE: 6.00853, time/step=268ms, lr=4.28e-04
+Epoch: [25][600/1718] 	 loss: 0.72877, MAE: 6.02849, time/step=267ms, lr=4.28e-04
+Epoch: [25][700/1718] 	 loss: 0.73070, MAE: 6.05080, time/step=266ms, lr=4.28e-04
+Epoch: [25][800/1718] 	 loss: 0.72907, MAE: 6.03505, time/step=265ms, lr=4.28e-04
+Epoch: [25][900/1718] 	 loss: 0.73257, MAE: 6.07244, time/step=266ms, lr=4.28e-04
+Epoch: [25][1000/1718] 	 loss: 0.73486, MAE: 6.09519, time/step=265ms, lr=4.28e-04
+Epoch: [25][1100/1718] 	 loss: 0.73462, MAE: 6.09133, time/step=265ms, lr=4.28e-04
+Epoch: [25][1200/1718] 	 loss: 0.73333, MAE: 6.07701, time/step=265ms, lr=4.28e-04
+Epoch: [25][1300/1718] 	 loss: 0.73528, MAE: 6.09694, time/step=265ms, lr=4.28e-04
+Epoch: [25][1400/1718] 	 loss: 0.73210, MAE: 6.06386, time/step=265ms, lr=4.28e-04
+Epoch: [25][1500/1718] 	 loss: 0.72886, MAE: 6.03200, time/step=265ms, lr=4.28e-04
+Epoch: [25][1600/1718] 	 loss: 0.72782, MAE: 6.02316, time/step=265ms, lr=4.28e-04
+Epoch: [25][1700/1718] 	 loss: 0.73258, MAE: 6.07324, time/step=264ms, lr=4.28e-04
+Epoch: [25][1717/1718] 	 loss: 0.73229, MAE: 6.07005, time/step=264ms, lr=4.28e-04
+Epoch: [26] Target: [7] train MAE: 6.07005, val MAE: 6.25797, test MAE: 6.62551, Time: 482.33s
+Best -- epoch=25, train MAE: 6.15136, val MAE: 5.42407, test MAE: 6.22250
+
+Epoch: [26] Target: [7] EMA val MAE: 6.21464, EMA test MAE: 6.18170, Time: 510.39s
+Best EMA -- epoch=23, val MAE: 5.82569, test MAE: 6.78102
+
+Epoch: [26][0/1718] 	 loss: 1.04760, MAE: 9.31069, time/step=703ms, lr=4.23e-04
+Epoch: [26][100/1718] 	 loss: 0.67411, MAE: 5.45441, time/step=268ms, lr=4.23e-04
+Epoch: [26][200/1718] 	 loss: 0.72464, MAE: 5.97887, time/step=268ms, lr=4.23e-04
+Epoch: [26][300/1718] 	 loss: 0.72763, MAE: 6.01115, time/step=267ms, lr=4.23e-04
+Epoch: [26][400/1718] 	 loss: 0.72078, MAE: 5.94119, time/step=267ms, lr=4.23e-04
+Epoch: [26][500/1718] 	 loss: 0.72226, MAE: 5.95981, time/step=267ms, lr=4.23e-04
+Epoch: [26][600/1718] 	 loss: 0.72723, MAE: 6.01202, time/step=266ms, lr=4.23e-04
+Epoch: [26][700/1718] 	 loss: 0.73054, MAE: 6.04580, time/step=266ms, lr=4.23e-04
+Epoch: [26][800/1718] 	 loss: 0.73375, MAE: 6.07887, time/step=265ms, lr=4.23e-04
+Epoch: [26][900/1718] 	 loss: 0.72959, MAE: 6.03740, time/step=265ms, lr=4.23e-04
+Epoch: [26][1000/1718] 	 loss: 0.73347, MAE: 6.07928, time/step=265ms, lr=4.23e-04
+Epoch: [26][1100/1718] 	 loss: 0.73314, MAE: 6.07537, time/step=264ms, lr=4.23e-04
+Epoch: [26][1200/1718] 	 loss: 0.73527, MAE: 6.09705, time/step=264ms, lr=4.23e-04
+Epoch: [26][1300/1718] 	 loss: 0.73773, MAE: 6.12091, time/step=265ms, lr=4.23e-04
+Epoch: [26][1400/1718] 	 loss: 0.74091, MAE: 6.15129, time/step=265ms, lr=4.23e-04
+Epoch: [26][1500/1718] 	 loss: 0.74342, MAE: 6.17472, time/step=265ms, lr=4.23e-04
+Epoch: [26][1600/1718] 	 loss: 0.74172, MAE: 6.15553, time/step=265ms, lr=4.23e-04
+Epoch: [26][1700/1718] 	 loss: 0.74295, MAE: 6.16680, time/step=265ms, lr=4.23e-04
+Epoch: [26][1717/1718] 	 loss: 0.74285, MAE: 6.16545, time/step=265ms, lr=4.23e-04
+Epoch: [27] Target: [7] train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027, Time: 483.54s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [27] Target: [7] EMA val MAE: 6.00670, EMA test MAE: 5.44643, Time: 511.64s
+Best EMA -- epoch=23, val MAE: 5.82569, test MAE: 6.78102
+
+Epoch: [27][0/1718] 	 loss: 0.76993, MAE: 6.41504, time/step=672ms, lr=4.17e-04
+Epoch: [27][100/1718] 	 loss: 0.77677, MAE: 6.47588, time/step=267ms, lr=4.17e-04
+Epoch: [27][200/1718] 	 loss: 0.77696, MAE: 6.47257, time/step=265ms, lr=4.17e-04
+Epoch: [27][300/1718] 	 loss: 0.76663, MAE: 6.35944, time/step=265ms, lr=4.17e-04
+Epoch: [27][400/1718] 	 loss: 0.76684, MAE: 6.35860, time/step=265ms, lr=4.17e-04
+Epoch: [27][500/1718] 	 loss: 0.76023, MAE: 6.28741, time/step=265ms, lr=4.17e-04
+Epoch: [27][600/1718] 	 loss: 0.76347, MAE: 6.31945, time/step=264ms, lr=4.17e-04
+Epoch: [27][700/1718] 	 loss: 0.76217, MAE: 6.30496, time/step=264ms, lr=4.17e-04
+Epoch: [27][800/1718] 	 loss: 0.75641, MAE: 6.24206, time/step=264ms, lr=4.17e-04
+Epoch: [27][900/1718] 	 loss: 0.75499, MAE: 6.22581, time/step=264ms, lr=4.17e-04
+Epoch: [27][1000/1718] 	 loss: 0.75349, MAE: 6.21052, time/step=264ms, lr=4.17e-04
+Epoch: [27][1100/1718] 	 loss: 0.75393, MAE: 6.21493, time/step=264ms, lr=4.17e-04
+Epoch: [27][1200/1718] 	 loss: 0.75417, MAE: 6.21724, time/step=264ms, lr=4.17e-04
+Epoch: [27][1300/1718] 	 loss: 0.75916, MAE: 6.26780, time/step=264ms, lr=4.17e-04
+Epoch: [27][1400/1718] 	 loss: 0.75534, MAE: 6.22720, time/step=264ms, lr=4.17e-04
+Epoch: [27][1500/1718] 	 loss: 0.75256, MAE: 6.19825, time/step=264ms, lr=4.17e-04
+Epoch: [27][1600/1718] 	 loss: 0.74900, MAE: 6.16303, time/step=264ms, lr=4.17e-04
+Epoch: [27][1700/1718] 	 loss: 0.74644, MAE: 6.13875, time/step=265ms, lr=4.17e-04
+Epoch: [27][1717/1718] 	 loss: 0.74530, MAE: 6.12754, time/step=265ms, lr=4.17e-04
+Epoch: [28] Target: [7] train MAE: 6.12754, val MAE: 5.82198, test MAE: 6.58045, Time: 482.93s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [28] Target: [7] EMA val MAE: 6.04614, EMA test MAE: 6.14232, Time: 511.00s
+Best EMA -- epoch=23, val MAE: 5.82569, test MAE: 6.78102
+
+Epoch: [28][0/1718] 	 loss: 0.69191, MAE: 5.62933, time/step=641ms, lr=4.11e-04
+Epoch: [28][100/1718] 	 loss: 0.70516, MAE: 5.77264, time/step=267ms, lr=4.11e-04
+Epoch: [28][200/1718] 	 loss: 0.68635, MAE: 5.58667, time/step=266ms, lr=4.11e-04
+Epoch: [28][300/1718] 	 loss: 0.71591, MAE: 5.90091, time/step=266ms, lr=4.11e-04
+Epoch: [28][400/1718] 	 loss: 0.71876, MAE: 5.92885, time/step=265ms, lr=4.11e-04
+Epoch: [28][500/1718] 	 loss: 0.72147, MAE: 5.95577, time/step=265ms, lr=4.11e-04
+Epoch: [28][600/1718] 	 loss: 0.72505, MAE: 5.99144, time/step=264ms, lr=4.11e-04
+Epoch: [28][700/1718] 	 loss: 0.72848, MAE: 6.02521, time/step=264ms, lr=4.11e-04
+Epoch: [28][800/1718] 	 loss: 0.72793, MAE: 6.01758, time/step=264ms, lr=4.11e-04
+Epoch: [28][900/1718] 	 loss: 0.73116, MAE: 6.05090, time/step=265ms, lr=4.11e-04
+Epoch: [28][1000/1718] 	 loss: 0.73194, MAE: 6.05543, time/step=264ms, lr=4.11e-04
+Epoch: [28][1100/1718] 	 loss: 0.73711, MAE: 6.10619, time/step=264ms, lr=4.11e-04
+Epoch: [28][1200/1718] 	 loss: 0.73641, MAE: 6.09524, time/step=264ms, lr=4.11e-04
+Epoch: [28][1300/1718] 	 loss: 0.74065, MAE: 6.13555, time/step=264ms, lr=4.11e-04
+Epoch: [28][1400/1718] 	 loss: 0.74192, MAE: 6.14459, time/step=264ms, lr=4.11e-04
+Epoch: [28][1500/1718] 	 loss: 0.74289, MAE: 6.15083, time/step=264ms, lr=4.11e-04
+Epoch: [28][1600/1718] 	 loss: 0.74500, MAE: 6.16914, time/step=264ms, lr=4.11e-04
+Epoch: [28][1700/1718] 	 loss: 0.74991, MAE: 6.21540, time/step=265ms, lr=4.11e-04
+Epoch: [28][1717/1718] 	 loss: 0.74844, MAE: 6.19947, time/step=265ms, lr=4.11e-04
+Epoch: [29] Target: [7] train MAE: 6.19947, val MAE: 6.77432, test MAE: 5.85473, Time: 482.87s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [29] Target: [7] EMA val MAE: 5.80784, EMA test MAE: 5.63761, Time: 511.00s
+Best EMA -- epoch=29, val MAE: 5.80784, test MAE: 5.63761
+
+Epoch: [29][0/1718] 	 loss: 0.34799, MAE: 1.98370, time/step=702ms, lr=4.05e-04
+Epoch: [29][100/1718] 	 loss: 0.71919, MAE: 5.83903, time/step=268ms, lr=4.05e-04
+Epoch: [29][200/1718] 	 loss: 0.72360, MAE: 5.89017, time/step=266ms, lr=4.05e-04
+Epoch: [29][300/1718] 	 loss: 0.71920, MAE: 5.84997, time/step=266ms, lr=4.05e-04
+Epoch: [29][400/1718] 	 loss: 0.73426, MAE: 6.01165, time/step=265ms, lr=4.05e-04
+Epoch: [29][500/1718] 	 loss: 0.72665, MAE: 5.93620, time/step=265ms, lr=4.05e-04
+Epoch: [29][600/1718] 	 loss: 0.73816, MAE: 6.05903, time/step=265ms, lr=4.05e-04
+Epoch: [29][700/1718] 	 loss: 0.75381, MAE: 6.21777, time/step=265ms, lr=4.05e-04
+Epoch: [29][800/1718] 	 loss: 0.75158, MAE: 6.19003, time/step=265ms, lr=4.05e-04
+Epoch: [29][900/1718] 	 loss: 0.74679, MAE: 6.13949, time/step=264ms, lr=4.05e-04
+Epoch: [29][1000/1718] 	 loss: 0.74734, MAE: 6.14476, time/step=265ms, lr=4.05e-04
+Epoch: [29][1100/1718] 	 loss: 0.74939, MAE: 6.16582, time/step=265ms, lr=4.05e-04
+Epoch: [29][1200/1718] 	 loss: 0.74424, MAE: 6.11260, time/step=265ms, lr=4.05e-04
+Epoch: [29][1300/1718] 	 loss: 0.73529, MAE: 6.02386, time/step=265ms, lr=4.05e-04
+Epoch: [29][1400/1718] 	 loss: 0.72883, MAE: 5.96319, time/step=265ms, lr=4.05e-04
+Epoch: [29][1500/1718] 	 loss: 0.72940, MAE: 5.97529, time/step=265ms, lr=4.05e-04
+Epoch: [29][1600/1718] 	 loss: 0.73053, MAE: 5.99197, time/step=265ms, lr=4.05e-04
+Epoch: [29][1700/1718] 	 loss: 0.72723, MAE: 5.96190, time/step=265ms, lr=4.05e-04
+Epoch: [29][1717/1718] 	 loss: 0.72629, MAE: 5.95300, time/step=265ms, lr=4.05e-04
+Epoch: [30] Target: [7] train MAE: 5.95300, val MAE: 6.06103, test MAE: 5.85777, Time: 483.39s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [30] Target: [7] EMA val MAE: 5.75538, EMA test MAE: 5.73612, Time: 511.50s
+Best EMA -- epoch=30, val MAE: 5.75538, test MAE: 5.73612
+
+Epoch: [30][0/1718] 	 loss: 0.73441, MAE: 6.13241, time/step=654ms, lr=3.99e-04
+Epoch: [30][100/1718] 	 loss: 0.72810, MAE: 6.06879, time/step=270ms, lr=3.99e-04
+Epoch: [30][200/1718] 	 loss: 0.71411, MAE: 5.91909, time/step=268ms, lr=3.99e-04
+Epoch: [30][300/1718] 	 loss: 0.72008, MAE: 5.97773, time/step=266ms, lr=3.99e-04
+Epoch: [30][400/1718] 	 loss: 0.72539, MAE: 6.02789, time/step=266ms, lr=3.99e-04
+Epoch: [30][500/1718] 	 loss: 0.71359, MAE: 5.90500, time/step=265ms, lr=3.99e-04
+Epoch: [30][600/1718] 	 loss: 0.72157, MAE: 5.98882, time/step=265ms, lr=3.99e-04
+Epoch: [30][700/1718] 	 loss: 0.73322, MAE: 6.10725, time/step=265ms, lr=3.99e-04
+Epoch: [30][800/1718] 	 loss: 0.72308, MAE: 5.99966, time/step=265ms, lr=3.99e-04
+Epoch: [30][900/1718] 	 loss: 0.72989, MAE: 6.06899, time/step=265ms, lr=3.99e-04
+Epoch: [30][1000/1718] 	 loss: 0.73467, MAE: 6.11459, time/step=265ms, lr=3.99e-04
+Epoch: [30][1100/1718] 	 loss: 0.73281, MAE: 6.09094, time/step=265ms, lr=3.99e-04
+Epoch: [30][1200/1718] 	 loss: 0.73024, MAE: 6.06141, time/step=265ms, lr=3.99e-04
+Epoch: [30][1300/1718] 	 loss: 0.73293, MAE: 6.08640, time/step=265ms, lr=3.99e-04
+Epoch: [30][1400/1718] 	 loss: 0.73639, MAE: 6.11815, time/step=265ms, lr=3.99e-04
+Epoch: [30][1500/1718] 	 loss: 0.73637, MAE: 6.11391, time/step=265ms, lr=3.99e-04
+Epoch: [30][1600/1718] 	 loss: 0.73682, MAE: 6.11474, time/step=265ms, lr=3.99e-04
+Epoch: [30][1700/1718] 	 loss: 0.73252, MAE: 6.06799, time/step=265ms, lr=3.99e-04
+Epoch: [30][1717/1718] 	 loss: 0.73412, MAE: 6.08426, time/step=265ms, lr=3.99e-04
+Epoch: [31] Target: [7] train MAE: 6.08426, val MAE: 6.28485, test MAE: 6.35063, Time: 483.34s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [31] Target: [7] EMA val MAE: 6.16163, EMA test MAE: 5.40628, Time: 511.48s
+Best EMA -- epoch=30, val MAE: 5.75538, test MAE: 5.73612
+
+Epoch: [31][0/1718] 	 loss: 0.45437, MAE: 3.16412, time/step=696ms, lr=3.93e-04
+Epoch: [31][100/1718] 	 loss: 0.73540, MAE: 6.06379, time/step=266ms, lr=3.93e-04
+Epoch: [31][200/1718] 	 loss: 0.78984, MAE: 6.61388, time/step=264ms, lr=3.93e-04
+Epoch: [31][300/1718] 	 loss: 0.75903, MAE: 6.28588, time/step=265ms, lr=3.93e-04
+Epoch: [31][400/1718] 	 loss: 0.75782, MAE: 6.27104, time/step=264ms, lr=3.93e-04
+Epoch: [31][500/1718] 	 loss: 0.75869, MAE: 6.27731, time/step=264ms, lr=3.93e-04
+Epoch: [31][600/1718] 	 loss: 0.74533, MAE: 6.13907, time/step=264ms, lr=3.93e-04
+Epoch: [31][700/1718] 	 loss: 0.73255, MAE: 6.01414, time/step=264ms, lr=3.93e-04
+Epoch: [31][800/1718] 	 loss: 0.73720, MAE: 6.06795, time/step=264ms, lr=3.93e-04
+Epoch: [31][900/1718] 	 loss: 0.74345, MAE: 6.13535, time/step=264ms, lr=3.93e-04
+Epoch: [31][1000/1718] 	 loss: 0.73780, MAE: 6.07868, time/step=264ms, lr=3.93e-04
+Epoch: [31][1100/1718] 	 loss: 0.73391, MAE: 6.04122, time/step=265ms, lr=3.93e-04
+Epoch: [31][1200/1718] 	 loss: 0.73754, MAE: 6.08167, time/step=264ms, lr=3.93e-04
+Epoch: [31][1300/1718] 	 loss: 0.73077, MAE: 6.01473, time/step=265ms, lr=3.93e-04
+Epoch: [31][1400/1718] 	 loss: 0.72929, MAE: 6.00272, time/step=265ms, lr=3.93e-04
+Epoch: [31][1500/1718] 	 loss: 0.73289, MAE: 6.04269, time/step=265ms, lr=3.93e-04
+Epoch: [31][1600/1718] 	 loss: 0.73201, MAE: 6.03503, time/step=265ms, lr=3.93e-04
+Epoch: [31][1700/1718] 	 loss: 0.73211, MAE: 6.03727, time/step=265ms, lr=3.93e-04
+Epoch: [31][1717/1718] 	 loss: 0.73181, MAE: 6.03442, time/step=265ms, lr=3.93e-04
+Epoch: [32] Target: [7] train MAE: 6.03442, val MAE: 6.22309, test MAE: 6.28051, Time: 482.91s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [32] Target: [7] EMA val MAE: 5.78072, EMA test MAE: 6.57476, Time: 511.04s
+Best EMA -- epoch=30, val MAE: 5.75538, test MAE: 5.73612
+
+Epoch: [32][0/1718] 	 loss: 0.27236, MAE: 1.31615, time/step=638ms, lr=3.86e-04
+Epoch: [32][100/1718] 	 loss: 0.70693, MAE: 5.81382, time/step=264ms, lr=3.86e-04
+Epoch: [32][200/1718] 	 loss: 0.71111, MAE: 5.85595, time/step=265ms, lr=3.86e-04
+Epoch: [32][300/1718] 	 loss: 0.73576, MAE: 6.10522, time/step=264ms, lr=3.86e-04
+Epoch: [32][400/1718] 	 loss: 0.73682, MAE: 6.11165, time/step=264ms, lr=3.86e-04
+Epoch: [32][500/1718] 	 loss: 0.73805, MAE: 6.12014, time/step=263ms, lr=3.86e-04
+Epoch: [32][600/1718] 	 loss: 0.73800, MAE: 6.11896, time/step=264ms, lr=3.86e-04
+Epoch: [32][700/1718] 	 loss: 0.74607, MAE: 6.19881, time/step=264ms, lr=3.86e-04
+Epoch: [32][800/1718] 	 loss: 0.75193, MAE: 6.25372, time/step=264ms, lr=3.86e-04
+Epoch: [32][900/1718] 	 loss: 0.74738, MAE: 6.20197, time/step=264ms, lr=3.86e-04
+Epoch: [32][1000/1718] 	 loss: 0.74969, MAE: 6.22155, time/step=265ms, lr=3.86e-04
+Epoch: [32][1100/1718] 	 loss: 0.74925, MAE: 6.21299, time/step=265ms, lr=3.86e-04
+Epoch: [32][1200/1718] 	 loss: 0.74893, MAE: 6.20733, time/step=265ms, lr=3.86e-04
+Epoch: [32][1300/1718] 	 loss: 0.74461, MAE: 6.16149, time/step=265ms, lr=3.86e-04
+Epoch: [32][1400/1718] 	 loss: 0.74627, MAE: 6.17927, time/step=265ms, lr=3.86e-04
+Epoch: [32][1500/1718] 	 loss: 0.74768, MAE: 6.19264, time/step=265ms, lr=3.86e-04
+Epoch: [32][1600/1718] 	 loss: 0.75096, MAE: 6.22468, time/step=265ms, lr=3.86e-04
+Epoch: [32][1700/1718] 	 loss: 0.75178, MAE: 6.23039, time/step=265ms, lr=3.86e-04
+Epoch: [32][1717/1718] 	 loss: 0.75015, MAE: 6.21307, time/step=265ms, lr=3.86e-04
+Epoch: [33] Target: [7] train MAE: 6.21307, val MAE: 5.96348, test MAE: 6.49767, Time: 482.80s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [33] Target: [7] EMA val MAE: 5.69564, EMA test MAE: 5.96519, Time: 510.91s
+Best EMA -- epoch=33, val MAE: 5.69564, test MAE: 5.96519
+
+Epoch: [33][0/1718] 	 loss: 0.82146, MAE: 6.90402, time/step=652ms, lr=3.80e-04
+Epoch: [33][100/1718] 	 loss: 0.67346, MAE: 5.41073, time/step=264ms, lr=3.80e-04
+Epoch: [33][200/1718] 	 loss: 0.71525, MAE: 5.84557, time/step=262ms, lr=3.80e-04
+Epoch: [33][300/1718] 	 loss: 0.73851, MAE: 6.07977, time/step=263ms, lr=3.80e-04
+Epoch: [33][400/1718] 	 loss: 0.74231, MAE: 6.11441, time/step=263ms, lr=3.80e-04
+Epoch: [33][500/1718] 	 loss: 0.75179, MAE: 6.20585, time/step=264ms, lr=3.80e-04
+Epoch: [33][600/1718] 	 loss: 0.75632, MAE: 6.24587, time/step=265ms, lr=3.80e-04
+Epoch: [33][700/1718] 	 loss: 0.75481, MAE: 6.22457, time/step=265ms, lr=3.80e-04
+Epoch: [33][800/1718] 	 loss: 0.74527, MAE: 6.12501, time/step=265ms, lr=3.80e-04
+Epoch: [33][900/1718] 	 loss: 0.74476, MAE: 6.12037, time/step=265ms, lr=3.80e-04
+Epoch: [33][1000/1718] 	 loss: 0.74488, MAE: 6.12195, time/step=265ms, lr=3.80e-04
+Epoch: [33][1100/1718] 	 loss: 0.74328, MAE: 6.10617, time/step=265ms, lr=3.80e-04
+Epoch: [33][1200/1718] 	 loss: 0.74716, MAE: 6.14651, time/step=265ms, lr=3.80e-04
+Epoch: [33][1300/1718] 	 loss: 0.74382, MAE: 6.11223, time/step=265ms, lr=3.80e-04
+Epoch: [33][1400/1718] 	 loss: 0.74448, MAE: 6.11942, time/step=265ms, lr=3.80e-04
+Epoch: [33][1500/1718] 	 loss: 0.74203, MAE: 6.09570, time/step=265ms, lr=3.80e-04
+Epoch: [33][1600/1718] 	 loss: 0.74212, MAE: 6.09797, time/step=265ms, lr=3.80e-04
+Epoch: [33][1700/1718] 	 loss: 0.74208, MAE: 6.09935, time/step=265ms, lr=3.80e-04
+Epoch: [33][1717/1718] 	 loss: 0.74282, MAE: 6.10716, time/step=265ms, lr=3.80e-04
+Epoch: [34] Target: [7] train MAE: 6.10716, val MAE: 6.34354, test MAE: 5.85799, Time: 483.02s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [34] Target: [7] EMA val MAE: 6.07144, EMA test MAE: 6.42156, Time: 511.11s
+Best EMA -- epoch=33, val MAE: 5.69564, test MAE: 5.96519
+
+Epoch: [34][0/1718] 	 loss: 1.19229, MAE: 10.77207, time/step=626ms, lr=3.73e-04
+Epoch: [34][100/1718] 	 loss: 0.74106, MAE: 6.12044, time/step=277ms, lr=3.73e-04
+Epoch: [34][200/1718] 	 loss: 0.72765, MAE: 5.97991, time/step=270ms, lr=3.73e-04
+Epoch: [34][300/1718] 	 loss: 0.73921, MAE: 6.09759, time/step=267ms, lr=3.73e-04
+Epoch: [34][400/1718] 	 loss: 0.75146, MAE: 6.21705, time/step=266ms, lr=3.73e-04
+Epoch: [34][500/1718] 	 loss: 0.75300, MAE: 6.22928, time/step=265ms, lr=3.73e-04
+Epoch: [34][600/1718] 	 loss: 0.75246, MAE: 6.22040, time/step=265ms, lr=3.73e-04
+Epoch: [34][700/1718] 	 loss: 0.74692, MAE: 6.16116, time/step=264ms, lr=3.73e-04
+Epoch: [34][800/1718] 	 loss: 0.74600, MAE: 6.15016, time/step=264ms, lr=3.73e-04
+Epoch: [34][900/1718] 	 loss: 0.74027, MAE: 6.09155, time/step=264ms, lr=3.73e-04
+Epoch: [34][1000/1718] 	 loss: 0.74288, MAE: 6.11848, time/step=264ms, lr=3.73e-04
+Epoch: [34][1100/1718] 	 loss: 0.74305, MAE: 6.11998, time/step=264ms, lr=3.73e-04
+Epoch: [34][1200/1718] 	 loss: 0.73938, MAE: 6.08219, time/step=264ms, lr=3.73e-04
+Epoch: [34][1300/1718] 	 loss: 0.73694, MAE: 6.05856, time/step=264ms, lr=3.73e-04
+Epoch: [34][1400/1718] 	 loss: 0.74006, MAE: 6.09152, time/step=264ms, lr=3.73e-04
+Epoch: [34][1500/1718] 	 loss: 0.73845, MAE: 6.07538, time/step=264ms, lr=3.73e-04
+Epoch: [34][1600/1718] 	 loss: 0.73811, MAE: 6.07350, time/step=264ms, lr=3.73e-04
+Epoch: [34][1700/1718] 	 loss: 0.73683, MAE: 6.06182, time/step=264ms, lr=3.73e-04
+Epoch: [34][1717/1718] 	 loss: 0.73623, MAE: 6.05589, time/step=264ms, lr=3.73e-04
+Epoch: [35] Target: [7] train MAE: 6.05589, val MAE: 6.42703, test MAE: 5.35556, Time: 482.13s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [35] Target: [7] EMA val MAE: 5.92428, EMA test MAE: 5.99443, Time: 510.18s
+Best EMA -- epoch=33, val MAE: 5.69564, test MAE: 5.96519
+
+Epoch: [35][0/1718] 	 loss: 0.29066, MAE: 1.48269, time/step=647ms, lr=3.66e-04
+Epoch: [35][100/1718] 	 loss: 0.71777, MAE: 5.89576, time/step=265ms, lr=3.66e-04
+Epoch: [35][200/1718] 	 loss: 0.75115, MAE: 6.23117, time/step=264ms, lr=3.66e-04
+Epoch: [35][300/1718] 	 loss: 0.74630, MAE: 6.17979, time/step=264ms, lr=3.66e-04
+Epoch: [35][400/1718] 	 loss: 0.73945, MAE: 6.11029, time/step=264ms, lr=3.66e-04
+Epoch: [35][500/1718] 	 loss: 0.74509, MAE: 6.16549, time/step=266ms, lr=3.66e-04
+Epoch: [35][600/1718] 	 loss: 0.74307, MAE: 6.14170, time/step=266ms, lr=3.66e-04
+Epoch: [35][700/1718] 	 loss: 0.73772, MAE: 6.08532, time/step=266ms, lr=3.66e-04
+Epoch: [35][800/1718] 	 loss: 0.74096, MAE: 6.11733, time/step=265ms, lr=3.66e-04
+Epoch: [35][900/1718] 	 loss: 0.74494, MAE: 6.15625, time/step=265ms, lr=3.66e-04
+Epoch: [35][1000/1718] 	 loss: 0.74505, MAE: 6.15386, time/step=265ms, lr=3.66e-04
+Epoch: [35][1100/1718] 	 loss: 0.74243, MAE: 6.12459, time/step=265ms, lr=3.66e-04
+Epoch: [35][1200/1718] 	 loss: 0.74282, MAE: 6.12791, time/step=265ms, lr=3.66e-04
+Epoch: [35][1300/1718] 	 loss: 0.74380, MAE: 6.13634, time/step=264ms, lr=3.66e-04
+Epoch: [35][1400/1718] 	 loss: 0.74924, MAE: 6.19159, time/step=264ms, lr=3.66e-04
+Epoch: [35][1500/1718] 	 loss: 0.74702, MAE: 6.16582, time/step=264ms, lr=3.66e-04
+Epoch: [35][1600/1718] 	 loss: 0.74876, MAE: 6.18206, time/step=264ms, lr=3.66e-04
+Epoch: [35][1700/1718] 	 loss: 0.74635, MAE: 6.15567, time/step=264ms, lr=3.66e-04
+Epoch: [35][1717/1718] 	 loss: 0.74645, MAE: 6.15648, time/step=264ms, lr=3.66e-04
+Epoch: [36] Target: [7] train MAE: 6.15648, val MAE: 6.42855, test MAE: 6.22115, Time: 482.50s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [36] Target: [7] EMA val MAE: 5.73434, EMA test MAE: 6.19806, Time: 510.56s
+Best EMA -- epoch=33, val MAE: 5.69564, test MAE: 5.96519
+
+Epoch: [36][0/1718] 	 loss: 1.14532, MAE: 10.25648, time/step=655ms, lr=3.59e-04
+Epoch: [36][100/1718] 	 loss: 0.76749, MAE: 6.34221, time/step=267ms, lr=3.59e-04
+Epoch: [36][200/1718] 	 loss: 0.76306, MAE: 6.29681, time/step=266ms, lr=3.59e-04
+Epoch: [36][300/1718] 	 loss: 0.73732, MAE: 6.03661, time/step=268ms, lr=3.59e-04
+Epoch: [36][400/1718] 	 loss: 0.72471, MAE: 5.91389, time/step=267ms, lr=3.59e-04
+Epoch: [36][500/1718] 	 loss: 0.72172, MAE: 5.89272, time/step=267ms, lr=3.59e-04
+Epoch: [36][600/1718] 	 loss: 0.71596, MAE: 5.84188, time/step=266ms, lr=3.59e-04
+Epoch: [36][700/1718] 	 loss: 0.71904, MAE: 5.88060, time/step=266ms, lr=3.59e-04
+Epoch: [36][800/1718] 	 loss: 0.73251, MAE: 6.02270, time/step=265ms, lr=3.59e-04
+Epoch: [36][900/1718] 	 loss: 0.72941, MAE: 5.99034, time/step=265ms, lr=3.59e-04
+Epoch: [36][1000/1718] 	 loss: 0.72459, MAE: 5.94247, time/step=265ms, lr=3.59e-04
+Epoch: [36][1100/1718] 	 loss: 0.72508, MAE: 5.94996, time/step=265ms, lr=3.59e-04
+Epoch: [36][1200/1718] 	 loss: 0.73118, MAE: 6.01410, time/step=265ms, lr=3.59e-04
+Epoch: [36][1300/1718] 	 loss: 0.73444, MAE: 6.04641, time/step=265ms, lr=3.59e-04
+Epoch: [36][1400/1718] 	 loss: 0.73443, MAE: 6.04401, time/step=265ms, lr=3.59e-04
+Epoch: [36][1500/1718] 	 loss: 0.73510, MAE: 6.04927, time/step=265ms, lr=3.59e-04
+Epoch: [36][1600/1718] 	 loss: 0.73996, MAE: 6.09722, time/step=265ms, lr=3.59e-04
+Epoch: [36][1700/1718] 	 loss: 0.74162, MAE: 6.11112, time/step=265ms, lr=3.59e-04
+Epoch: [36][1717/1718] 	 loss: 0.74114, MAE: 6.10567, time/step=265ms, lr=3.59e-04
+Epoch: [37] Target: [7] train MAE: 6.10567, val MAE: 5.93904, test MAE: 6.05814, Time: 483.85s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [37] Target: [7] EMA val MAE: 5.63989, EMA test MAE: 6.18444, Time: 511.98s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [37][0/1718] 	 loss: 0.55746, MAE: 4.15439, time/step=662ms, lr=3.52e-04
+Epoch: [37][100/1718] 	 loss: 0.74215, MAE: 6.05966, time/step=266ms, lr=3.52e-04
+Epoch: [37][200/1718] 	 loss: 0.72775, MAE: 5.91414, time/step=265ms, lr=3.52e-04
+Epoch: [37][300/1718] 	 loss: 0.72544, MAE: 5.89852, time/step=264ms, lr=3.52e-04
+Epoch: [37][400/1718] 	 loss: 0.73136, MAE: 5.96502, time/step=265ms, lr=3.52e-04
+Epoch: [37][500/1718] 	 loss: 0.73379, MAE: 5.99302, time/step=265ms, lr=3.52e-04
+Epoch: [37][600/1718] 	 loss: 0.73884, MAE: 6.04661, time/step=264ms, lr=3.52e-04
+Epoch: [37][700/1718] 	 loss: 0.74296, MAE: 6.08734, time/step=264ms, lr=3.52e-04
+Epoch: [37][800/1718] 	 loss: 0.73584, MAE: 6.01285, time/step=264ms, lr=3.52e-04
+Epoch: [37][900/1718] 	 loss: 0.73530, MAE: 6.00827, time/step=264ms, lr=3.52e-04
+Epoch: [37][1000/1718] 	 loss: 0.73317, MAE: 5.98869, time/step=264ms, lr=3.52e-04
+Epoch: [37][1100/1718] 	 loss: 0.73782, MAE: 6.03818, time/step=264ms, lr=3.52e-04
+Epoch: [37][1200/1718] 	 loss: 0.73903, MAE: 6.05207, time/step=264ms, lr=3.52e-04
+Epoch: [37][1300/1718] 	 loss: 0.73642, MAE: 6.02673, time/step=264ms, lr=3.52e-04
+Epoch: [37][1400/1718] 	 loss: 0.73549, MAE: 6.01911, time/step=265ms, lr=3.52e-04
+Epoch: [37][1500/1718] 	 loss: 0.73694, MAE: 6.03491, time/step=264ms, lr=3.52e-04
+Epoch: [37][1600/1718] 	 loss: 0.73927, MAE: 6.05947, time/step=264ms, lr=3.52e-04
+Epoch: [37][1700/1718] 	 loss: 0.74036, MAE: 6.07031, time/step=265ms, lr=3.52e-04
+Epoch: [37][1717/1718] 	 loss: 0.73984, MAE: 6.06488, time/step=265ms, lr=3.52e-04
+Epoch: [38] Target: [7] train MAE: 6.06488, val MAE: 5.64528, test MAE: 5.38248, Time: 482.82s
+Best -- epoch=27, train MAE: 6.16545, val MAE: 5.37197, test MAE: 6.21027
+
+Epoch: [38] Target: [7] EMA val MAE: 6.33632, EMA test MAE: 6.36226, Time: 510.95s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [38][0/1718] 	 loss: 0.49130, MAE: 3.49799, time/step=671ms, lr=3.45e-04
+Epoch: [38][100/1718] 	 loss: 0.73663, MAE: 6.04452, time/step=279ms, lr=3.45e-04
+Epoch: [38][200/1718] 	 loss: 0.75175, MAE: 6.19546, time/step=271ms, lr=3.45e-04
+Epoch: [38][300/1718] 	 loss: 0.73999, MAE: 6.07556, time/step=270ms, lr=3.45e-04
+Epoch: [38][400/1718] 	 loss: 0.74492, MAE: 6.12521, time/step=269ms, lr=3.45e-04
+Epoch: [38][500/1718] 	 loss: 0.74788, MAE: 6.15501, time/step=268ms, lr=3.45e-04
+Epoch: [38][600/1718] 	 loss: 0.74680, MAE: 6.14161, time/step=267ms, lr=3.45e-04
+Epoch: [38][700/1718] 	 loss: 0.74306, MAE: 6.10216, time/step=267ms, lr=3.45e-04
+Epoch: [38][800/1718] 	 loss: 0.74757, MAE: 6.14774, time/step=267ms, lr=3.45e-04
+Epoch: [38][900/1718] 	 loss: 0.74809, MAE: 6.15021, time/step=267ms, lr=3.45e-04
+Epoch: [38][1000/1718] 	 loss: 0.74301, MAE: 6.09736, time/step=266ms, lr=3.45e-04
+Epoch: [38][1100/1718] 	 loss: 0.74265, MAE: 6.09429, time/step=266ms, lr=3.45e-04
+Epoch: [38][1200/1718] 	 loss: 0.74429, MAE: 6.11189, time/step=266ms, lr=3.45e-04
+Epoch: [38][1300/1718] 	 loss: 0.74200, MAE: 6.08939, time/step=266ms, lr=3.45e-04
+Epoch: [38][1400/1718] 	 loss: 0.73971, MAE: 6.06743, time/step=265ms, lr=3.45e-04
+Epoch: [38][1500/1718] 	 loss: 0.73699, MAE: 6.04107, time/step=265ms, lr=3.45e-04
+Epoch: [38][1600/1718] 	 loss: 0.73797, MAE: 6.05339, time/step=266ms, lr=3.45e-04
+Epoch: [38][1700/1718] 	 loss: 0.73944, MAE: 6.07019, time/step=266ms, lr=3.45e-04
+Epoch: [38][1717/1718] 	 loss: 0.73811, MAE: 6.05655, time/step=266ms, lr=3.45e-04
+Epoch: [39] Target: [7] train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122, Time: 484.65s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [39] Target: [7] EMA val MAE: 6.19731, EMA test MAE: 5.87654, Time: 512.74s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [39][0/1718] 	 loss: 0.83305, MAE: 7.05380, time/step=621ms, lr=3.38e-04
+Epoch: [39][100/1718] 	 loss: 0.77398, MAE: 6.43843, time/step=269ms, lr=3.38e-04
+Epoch: [39][200/1718] 	 loss: 0.74689, MAE: 6.15633, time/step=266ms, lr=3.38e-04
+Epoch: [39][300/1718] 	 loss: 0.72688, MAE: 5.95333, time/step=265ms, lr=3.38e-04
+Epoch: [39][400/1718] 	 loss: 0.73920, MAE: 6.08453, time/step=265ms, lr=3.38e-04
+Epoch: [39][500/1718] 	 loss: 0.73531, MAE: 6.04427, time/step=265ms, lr=3.38e-04
+Epoch: [39][600/1718] 	 loss: 0.73198, MAE: 6.01157, time/step=265ms, lr=3.38e-04
+Epoch: [39][700/1718] 	 loss: 0.73964, MAE: 6.09175, time/step=265ms, lr=3.38e-04
+Epoch: [39][800/1718] 	 loss: 0.73442, MAE: 6.03806, time/step=265ms, lr=3.38e-04
+Epoch: [39][900/1718] 	 loss: 0.73213, MAE: 6.01548, time/step=265ms, lr=3.38e-04
+Epoch: [39][1000/1718] 	 loss: 0.73105, MAE: 6.00496, time/step=265ms, lr=3.38e-04
+Epoch: [39][1100/1718] 	 loss: 0.72758, MAE: 5.96999, time/step=266ms, lr=3.38e-04
+Epoch: [39][1200/1718] 	 loss: 0.72425, MAE: 5.93771, time/step=265ms, lr=3.38e-04
+Epoch: [39][1300/1718] 	 loss: 0.72015, MAE: 5.89782, time/step=265ms, lr=3.38e-04
+Epoch: [39][1400/1718] 	 loss: 0.72069, MAE: 5.90625, time/step=265ms, lr=3.38e-04
+Epoch: [39][1500/1718] 	 loss: 0.72078, MAE: 5.90947, time/step=265ms, lr=3.38e-04
+Epoch: [39][1600/1718] 	 loss: 0.71989, MAE: 5.90287, time/step=265ms, lr=3.38e-04
+Epoch: [39][1700/1718] 	 loss: 0.72039, MAE: 5.90999, time/step=264ms, lr=3.38e-04
+Epoch: [39][1717/1718] 	 loss: 0.71998, MAE: 5.90606, time/step=264ms, lr=3.38e-04
+Epoch: [40] Target: [7] train MAE: 5.90606, val MAE: 5.88751, test MAE: 6.19548, Time: 482.53s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [40] Target: [7] EMA val MAE: 5.87967, EMA test MAE: 6.01168, Time: 510.64s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [40][0/1718] 	 loss: 1.25848, MAE: 11.50035, time/step=716ms, lr=3.31e-04
+Epoch: [40][100/1718] 	 loss: 0.80415, MAE: 6.80120, time/step=270ms, lr=3.31e-04
+Epoch: [40][200/1718] 	 loss: 0.76865, MAE: 6.42821, time/step=265ms, lr=3.31e-04
+Epoch: [40][300/1718] 	 loss: 0.77812, MAE: 6.52046, time/step=265ms, lr=3.31e-04
+Epoch: [40][400/1718] 	 loss: 0.75242, MAE: 6.24961, time/step=265ms, lr=3.31e-04
+Epoch: [40][500/1718] 	 loss: 0.75827, MAE: 6.30768, time/step=265ms, lr=3.31e-04
+Epoch: [40][600/1718] 	 loss: 0.75249, MAE: 6.24509, time/step=265ms, lr=3.31e-04
+Epoch: [40][700/1718] 	 loss: 0.75059, MAE: 6.22290, time/step=265ms, lr=3.31e-04
+Epoch: [40][800/1718] 	 loss: 0.76510, MAE: 6.36782, time/step=265ms, lr=3.31e-04
+Epoch: [40][900/1718] 	 loss: 0.77412, MAE: 6.45249, time/step=265ms, lr=3.31e-04
+Epoch: [40][1000/1718] 	 loss: 0.76979, MAE: 6.39968, time/step=265ms, lr=3.31e-04
+Epoch: [40][1100/1718] 	 loss: 0.77128, MAE: 6.40775, time/step=265ms, lr=3.31e-04
+Epoch: [40][1200/1718] 	 loss: 0.76583, MAE: 6.34537, time/step=266ms, lr=3.31e-04
+Epoch: [40][1300/1718] 	 loss: 0.76282, MAE: 6.30998, time/step=266ms, lr=3.31e-04
+Epoch: [40][1400/1718] 	 loss: 0.76076, MAE: 6.28613, time/step=265ms, lr=3.31e-04
+Epoch: [40][1500/1718] 	 loss: 0.75853, MAE: 6.26063, time/step=265ms, lr=3.31e-04
+Epoch: [40][1600/1718] 	 loss: 0.75931, MAE: 6.26702, time/step=265ms, lr=3.31e-04
+Epoch: [40][1700/1718] 	 loss: 0.75992, MAE: 6.27117, time/step=265ms, lr=3.31e-04
+Epoch: [40][1717/1718] 	 loss: 0.75898, MAE: 6.26109, time/step=265ms, lr=3.31e-04
+Epoch: [41] Target: [7] train MAE: 6.26109, val MAE: 6.33134, test MAE: 5.68363, Time: 483.85s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [41] Target: [7] EMA val MAE: 6.06623, EMA test MAE: 6.51090, Time: 511.94s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [41][0/1718] 	 loss: 0.32786, MAE: 1.77375, time/step=721ms, lr=3.23e-04
+Epoch: [41][100/1718] 	 loss: 0.75447, MAE: 6.18676, time/step=271ms, lr=3.23e-04
+Epoch: [41][200/1718] 	 loss: 0.81021, MAE: 6.75512, time/step=268ms, lr=3.23e-04
+Epoch: [41][300/1718] 	 loss: 0.78972, MAE: 6.52855, time/step=267ms, lr=3.23e-04
+Epoch: [41][400/1718] 	 loss: 0.76618, MAE: 6.28299, time/step=266ms, lr=3.23e-04
+Epoch: [41][500/1718] 	 loss: 0.75698, MAE: 6.19133, time/step=266ms, lr=3.23e-04
+Epoch: [41][600/1718] 	 loss: 0.76135, MAE: 6.23898, time/step=266ms, lr=3.23e-04
+Epoch: [41][700/1718] 	 loss: 0.76880, MAE: 6.31410, time/step=265ms, lr=3.23e-04
+Epoch: [41][800/1718] 	 loss: 0.76150, MAE: 6.23701, time/step=265ms, lr=3.23e-04
+Epoch: [41][900/1718] 	 loss: 0.75188, MAE: 6.14018, time/step=265ms, lr=3.23e-04
+Epoch: [41][1000/1718] 	 loss: 0.75044, MAE: 6.12823, time/step=265ms, lr=3.23e-04
+Epoch: [41][1100/1718] 	 loss: 0.75221, MAE: 6.14895, time/step=265ms, lr=3.23e-04
+Epoch: [41][1200/1718] 	 loss: 0.75323, MAE: 6.16115, time/step=266ms, lr=3.23e-04
+Epoch: [41][1300/1718] 	 loss: 0.75189, MAE: 6.14849, time/step=266ms, lr=3.23e-04
+Epoch: [41][1400/1718] 	 loss: 0.75153, MAE: 6.14609, time/step=266ms, lr=3.23e-04
+Epoch: [41][1500/1718] 	 loss: 0.75222, MAE: 6.15413, time/step=266ms, lr=3.23e-04
+Epoch: [41][1600/1718] 	 loss: 0.75507, MAE: 6.18423, time/step=266ms, lr=3.23e-04
+Epoch: [41][1700/1718] 	 loss: 0.75334, MAE: 6.16634, time/step=265ms, lr=3.23e-04
+Epoch: [41][1717/1718] 	 loss: 0.75557, MAE: 6.18937, time/step=265ms, lr=3.23e-04
+Epoch: [42] Target: [7] train MAE: 6.18937, val MAE: 6.28907, test MAE: 6.72603, Time: 484.08s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [42] Target: [7] EMA val MAE: 5.99356, EMA test MAE: 5.67465, Time: 512.15s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [42][0/1718] 	 loss: 1.75883, MAE: 16.54928, time/step=641ms, lr=3.16e-04
+Epoch: [42][100/1718] 	 loss: 0.71669, MAE: 5.78146, time/step=267ms, lr=3.16e-04
+Epoch: [42][200/1718] 	 loss: 0.73150, MAE: 5.93812, time/step=266ms, lr=3.16e-04
+Epoch: [42][300/1718] 	 loss: 0.73840, MAE: 6.00857, time/step=265ms, lr=3.16e-04
+Epoch: [42][400/1718] 	 loss: 0.74173, MAE: 6.04382, time/step=265ms, lr=3.16e-04
+Epoch: [42][500/1718] 	 loss: 0.72153, MAE: 5.83792, time/step=264ms, lr=3.16e-04
+Epoch: [42][600/1718] 	 loss: 0.71596, MAE: 5.78660, time/step=264ms, lr=3.16e-04
+Epoch: [42][700/1718] 	 loss: 0.72097, MAE: 5.84437, time/step=264ms, lr=3.16e-04
+Epoch: [42][800/1718] 	 loss: 0.72445, MAE: 5.88469, time/step=265ms, lr=3.16e-04
+Epoch: [42][900/1718] 	 loss: 0.72396, MAE: 5.88314, time/step=265ms, lr=3.16e-04
+Epoch: [42][1000/1718] 	 loss: 0.71790, MAE: 5.82511, time/step=265ms, lr=3.16e-04
+Epoch: [42][1100/1718] 	 loss: 0.71563, MAE: 5.80721, time/step=265ms, lr=3.16e-04
+Epoch: [42][1200/1718] 	 loss: 0.71673, MAE: 5.82409, time/step=265ms, lr=3.16e-04
+Epoch: [42][1300/1718] 	 loss: 0.71660, MAE: 5.82729, time/step=265ms, lr=3.16e-04
+Epoch: [42][1400/1718] 	 loss: 0.71745, MAE: 5.84081, time/step=265ms, lr=3.16e-04
+Epoch: [42][1500/1718] 	 loss: 0.72162, MAE: 5.88696, time/step=265ms, lr=3.16e-04
+Epoch: [42][1600/1718] 	 loss: 0.72286, MAE: 5.90211, time/step=265ms, lr=3.16e-04
+Epoch: [42][1700/1718] 	 loss: 0.72364, MAE: 5.91226, time/step=265ms, lr=3.16e-04
+Epoch: [42][1717/1718] 	 loss: 0.72378, MAE: 5.91400, time/step=265ms, lr=3.16e-04
+Epoch: [43] Target: [7] train MAE: 5.91400, val MAE: 5.66814, test MAE: 6.22865, Time: 483.45s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [43] Target: [7] EMA val MAE: 5.90659, EMA test MAE: 6.03807, Time: 511.51s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [43][0/1718] 	 loss: 0.82667, MAE: 7.00815, time/step=677ms, lr=3.08e-04
+Epoch: [43][100/1718] 	 loss: 0.81736, MAE: 6.89150, time/step=268ms, lr=3.08e-04
+Epoch: [43][200/1718] 	 loss: 0.77687, MAE: 6.46052, time/step=267ms, lr=3.08e-04
+Epoch: [43][300/1718] 	 loss: 0.75610, MAE: 6.24459, time/step=266ms, lr=3.08e-04
+Epoch: [43][400/1718] 	 loss: 0.76448, MAE: 6.32892, time/step=266ms, lr=3.08e-04
+Epoch: [43][500/1718] 	 loss: 0.75820, MAE: 6.25907, time/step=268ms, lr=3.08e-04
+Epoch: [43][600/1718] 	 loss: 0.74879, MAE: 6.15845, time/step=267ms, lr=3.08e-04
+Epoch: [43][700/1718] 	 loss: 0.74457, MAE: 6.11594, time/step=266ms, lr=3.08e-04
+Epoch: [43][800/1718] 	 loss: 0.73500, MAE: 6.01876, time/step=265ms, lr=3.08e-04
+Epoch: [43][900/1718] 	 loss: 0.73424, MAE: 6.01454, time/step=265ms, lr=3.08e-04
+Epoch: [43][1000/1718] 	 loss: 0.73605, MAE: 6.03533, time/step=265ms, lr=3.08e-04
+Epoch: [43][1100/1718] 	 loss: 0.73238, MAE: 5.99949, time/step=266ms, lr=3.08e-04
+Epoch: [43][1200/1718] 	 loss: 0.72955, MAE: 5.97347, time/step=265ms, lr=3.08e-04
+Epoch: [43][1300/1718] 	 loss: 0.73101, MAE: 5.99133, time/step=265ms, lr=3.08e-04
+Epoch: [43][1400/1718] 	 loss: 0.72972, MAE: 5.97947, time/step=265ms, lr=3.08e-04
+Epoch: [43][1500/1718] 	 loss: 0.72882, MAE: 5.97234, time/step=265ms, lr=3.08e-04
+Epoch: [43][1600/1718] 	 loss: 0.73089, MAE: 5.99548, time/step=265ms, lr=3.08e-04
+Epoch: [43][1700/1718] 	 loss: 0.73045, MAE: 5.99235, time/step=265ms, lr=3.08e-04
+Epoch: [43][1717/1718] 	 loss: 0.73060, MAE: 5.99410, time/step=265ms, lr=3.08e-04
+Epoch: [44] Target: [7] train MAE: 5.99410, val MAE: 6.30691, test MAE: 5.29144, Time: 483.73s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [44] Target: [7] EMA val MAE: 6.70744, EMA test MAE: 5.98763, Time: 511.84s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [44][0/1718] 	 loss: 0.38150, MAE: 2.41201, time/step=668ms, lr=3.01e-04
+Epoch: [44][100/1718] 	 loss: 0.72363, MAE: 5.94275, time/step=267ms, lr=3.01e-04
+Epoch: [44][200/1718] 	 loss: 0.72691, MAE: 5.97836, time/step=263ms, lr=3.01e-04
+Epoch: [44][300/1718] 	 loss: 0.72260, MAE: 5.93527, time/step=264ms, lr=3.01e-04
+Epoch: [44][400/1718] 	 loss: 0.71554, MAE: 5.86495, time/step=264ms, lr=3.01e-04
+Epoch: [44][500/1718] 	 loss: 0.72857, MAE: 5.99855, time/step=263ms, lr=3.01e-04
+Epoch: [44][600/1718] 	 loss: 0.73223, MAE: 6.03279, time/step=263ms, lr=3.01e-04
+Epoch: [44][700/1718] 	 loss: 0.72804, MAE: 5.98700, time/step=263ms, lr=3.01e-04
+Epoch: [44][800/1718] 	 loss: 0.73198, MAE: 6.02626, time/step=264ms, lr=3.01e-04
+Epoch: [44][900/1718] 	 loss: 0.72732, MAE: 5.97748, time/step=264ms, lr=3.01e-04
+Epoch: [44][1000/1718] 	 loss: 0.72804, MAE: 5.98439, time/step=264ms, lr=3.01e-04
+Epoch: [44][1100/1718] 	 loss: 0.73203, MAE: 6.02419, time/step=264ms, lr=3.01e-04
+Epoch: [44][1200/1718] 	 loss: 0.73636, MAE: 6.06622, time/step=264ms, lr=3.01e-04
+Epoch: [44][1300/1718] 	 loss: 0.73441, MAE: 6.04301, time/step=264ms, lr=3.01e-04
+Epoch: [44][1400/1718] 	 loss: 0.73523, MAE: 6.04972, time/step=264ms, lr=3.01e-04
+Epoch: [44][1500/1718] 	 loss: 0.73334, MAE: 6.02867, time/step=264ms, lr=3.01e-04
+Epoch: [44][1600/1718] 	 loss: 0.73359, MAE: 6.03022, time/step=264ms, lr=3.01e-04
+Epoch: [44][1700/1718] 	 loss: 0.73712, MAE: 6.06567, time/step=264ms, lr=3.01e-04
+Epoch: [44][1717/1718] 	 loss: 0.73833, MAE: 6.07786, time/step=264ms, lr=3.01e-04
+Epoch: [45] Target: [7] train MAE: 6.07786, val MAE: 5.68830, test MAE: 5.65512, Time: 481.79s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [45] Target: [7] EMA val MAE: 5.78544, EMA test MAE: 5.70226, Time: 509.87s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [45][0/1718] 	 loss: 0.49732, MAE: 3.54607, time/step=708ms, lr=2.93e-04
+Epoch: [45][100/1718] 	 loss: 0.71315, MAE: 5.77576, time/step=271ms, lr=2.93e-04
+Epoch: [45][200/1718] 	 loss: 0.70332, MAE: 5.68203, time/step=267ms, lr=2.93e-04
+Epoch: [45][300/1718] 	 loss: 0.72521, MAE: 5.91444, time/step=266ms, lr=2.93e-04
+Epoch: [45][400/1718] 	 loss: 0.73372, MAE: 6.00038, time/step=265ms, lr=2.93e-04
+Epoch: [45][500/1718] 	 loss: 0.73027, MAE: 5.96452, time/step=266ms, lr=2.93e-04
+Epoch: [45][600/1718] 	 loss: 0.72852, MAE: 5.94604, time/step=266ms, lr=2.93e-04
+Epoch: [45][700/1718] 	 loss: 0.73378, MAE: 6.00055, time/step=265ms, lr=2.93e-04
+Epoch: [45][800/1718] 	 loss: 0.73786, MAE: 6.04072, time/step=265ms, lr=2.93e-04
+Epoch: [45][900/1718] 	 loss: 0.73404, MAE: 5.99933, time/step=265ms, lr=2.93e-04
+Epoch: [45][1000/1718] 	 loss: 0.72730, MAE: 5.93094, time/step=265ms, lr=2.93e-04
+Epoch: [45][1100/1718] 	 loss: 0.73016, MAE: 5.96218, time/step=265ms, lr=2.93e-04
+Epoch: [45][1200/1718] 	 loss: 0.73282, MAE: 5.99090, time/step=265ms, lr=2.93e-04
+Epoch: [45][1300/1718] 	 loss: 0.73741, MAE: 6.03781, time/step=265ms, lr=2.93e-04
+Epoch: [45][1400/1718] 	 loss: 0.73561, MAE: 6.01817, time/step=265ms, lr=2.93e-04
+Epoch: [45][1500/1718] 	 loss: 0.73753, MAE: 6.03709, time/step=265ms, lr=2.93e-04
+Epoch: [45][1600/1718] 	 loss: 0.73946, MAE: 6.05555, time/step=265ms, lr=2.93e-04
+Epoch: [45][1700/1718] 	 loss: 0.74010, MAE: 6.06040, time/step=265ms, lr=2.93e-04
+Epoch: [45][1717/1718] 	 loss: 0.73821, MAE: 6.04072, time/step=265ms, lr=2.93e-04
+Epoch: [46] Target: [7] train MAE: 6.04072, val MAE: 6.38322, test MAE: 6.07241, Time: 483.84s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [46] Target: [7] EMA val MAE: 6.14794, EMA test MAE: 5.98727, Time: 511.93s
+Best EMA -- epoch=37, val MAE: 5.63989, test MAE: 6.18444
+
+Epoch: [46][0/1718] 	 loss: 0.86164, MAE: 7.29550, time/step=666ms, lr=2.86e-04
+Epoch: [46][100/1718] 	 loss: 0.80801, MAE: 6.73469, time/step=270ms, lr=2.86e-04
+Epoch: [46][200/1718] 	 loss: 0.77421, MAE: 6.38029, time/step=267ms, lr=2.86e-04
+Epoch: [46][300/1718] 	 loss: 0.75822, MAE: 6.21667, time/step=266ms, lr=2.86e-04
+Epoch: [46][400/1718] 	 loss: 0.75949, MAE: 6.23048, time/step=266ms, lr=2.86e-04
+Epoch: [46][500/1718] 	 loss: 0.75169, MAE: 6.15113, time/step=265ms, lr=2.86e-04
+Epoch: [46][600/1718] 	 loss: 0.75537, MAE: 6.18954, time/step=265ms, lr=2.86e-04
+Epoch: [46][700/1718] 	 loss: 0.74785, MAE: 6.11202, time/step=264ms, lr=2.86e-04
+Epoch: [46][800/1718] 	 loss: 0.75086, MAE: 6.14337, time/step=264ms, lr=2.86e-04
+Epoch: [46][900/1718] 	 loss: 0.74760, MAE: 6.11021, time/step=264ms, lr=2.86e-04
+Epoch: [46][1000/1718] 	 loss: 0.73686, MAE: 6.00180, time/step=265ms, lr=2.86e-04
+Epoch: [46][1100/1718] 	 loss: 0.73861, MAE: 6.02294, time/step=264ms, lr=2.86e-04
+Epoch: [46][1200/1718] 	 loss: 0.74215, MAE: 6.06183, time/step=264ms, lr=2.86e-04
+Epoch: [46][1300/1718] 	 loss: 0.74280, MAE: 6.06975, time/step=264ms, lr=2.86e-04
+Epoch: [46][1400/1718] 	 loss: 0.74888, MAE: 6.13249, time/step=264ms, lr=2.86e-04
+Epoch: [46][1500/1718] 	 loss: 0.74686, MAE: 6.11082, time/step=264ms, lr=2.86e-04
+Epoch: [46][1600/1718] 	 loss: 0.74247, MAE: 6.06509, time/step=264ms, lr=2.86e-04
+Epoch: [46][1700/1718] 	 loss: 0.74365, MAE: 6.07776, time/step=265ms, lr=2.86e-04
+Epoch: [46][1717/1718] 	 loss: 0.74281, MAE: 6.06920, time/step=265ms, lr=2.86e-04
+Epoch: [47] Target: [7] train MAE: 6.06920, val MAE: 5.51051, test MAE: 6.24183, Time: 482.86s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [47] Target: [7] EMA val MAE: 5.59433, EMA test MAE: 5.39195, Time: 510.98s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [47][0/1718] 	 loss: 0.76559, MAE: 6.31924, time/step=649ms, lr=2.78e-04
+Epoch: [47][100/1718] 	 loss: 0.72977, MAE: 5.95443, time/step=271ms, lr=2.78e-04
+Epoch: [47][200/1718] 	 loss: 0.71989, MAE: 5.85306, time/step=267ms, lr=2.78e-04
+Epoch: [47][300/1718] 	 loss: 0.71089, MAE: 5.76427, time/step=270ms, lr=2.78e-04
+Epoch: [47][400/1718] 	 loss: 0.71002, MAE: 5.76071, time/step=269ms, lr=2.78e-04
+Epoch: [47][500/1718] 	 loss: 0.70830, MAE: 5.74860, time/step=268ms, lr=2.78e-04
+Epoch: [47][600/1718] 	 loss: 0.71161, MAE: 5.78700, time/step=267ms, lr=2.78e-04
+Epoch: [47][700/1718] 	 loss: 0.72042, MAE: 5.88046, time/step=266ms, lr=2.78e-04
+Epoch: [47][800/1718] 	 loss: 0.72405, MAE: 5.91832, time/step=265ms, lr=2.78e-04
+Epoch: [47][900/1718] 	 loss: 0.73288, MAE: 6.00701, time/step=266ms, lr=2.78e-04
+Epoch: [47][1000/1718] 	 loss: 0.72737, MAE: 5.94838, time/step=265ms, lr=2.78e-04
+Epoch: [47][1100/1718] 	 loss: 0.72639, MAE: 5.93840, time/step=265ms, lr=2.78e-04
+Epoch: [47][1200/1718] 	 loss: 0.72706, MAE: 5.94544, time/step=265ms, lr=2.78e-04
+Epoch: [47][1300/1718] 	 loss: 0.72714, MAE: 5.94599, time/step=265ms, lr=2.78e-04
+Epoch: [47][1400/1718] 	 loss: 0.72506, MAE: 5.92464, time/step=265ms, lr=2.78e-04
+Epoch: [47][1500/1718] 	 loss: 0.72407, MAE: 5.91581, time/step=265ms, lr=2.78e-04
+Epoch: [47][1600/1718] 	 loss: 0.72663, MAE: 5.94282, time/step=265ms, lr=2.78e-04
+Epoch: [47][1700/1718] 	 loss: 0.73105, MAE: 5.98813, time/step=265ms, lr=2.78e-04
+Epoch: [47][1717/1718] 	 loss: 0.73198, MAE: 5.99759, time/step=265ms, lr=2.78e-04
+Epoch: [48] Target: [7] train MAE: 5.99759, val MAE: 5.56147, test MAE: 5.77559, Time: 482.72s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [48] Target: [7] EMA val MAE: 5.60164, EMA test MAE: 6.25950, Time: 510.83s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [48][0/1718] 	 loss: 0.38552, MAE: 2.40171, time/step=629ms, lr=2.70e-04
+Epoch: [48][100/1718] 	 loss: 0.68710, MAE: 5.52420, time/step=274ms, lr=2.70e-04
+Epoch: [48][200/1718] 	 loss: 0.71044, MAE: 5.76874, time/step=269ms, lr=2.70e-04
+Epoch: [48][300/1718] 	 loss: 0.73546, MAE: 6.02791, time/step=267ms, lr=2.70e-04
+Epoch: [48][400/1718] 	 loss: 0.73598, MAE: 6.02957, time/step=266ms, lr=2.70e-04
+Epoch: [48][500/1718] 	 loss: 0.72990, MAE: 5.96571, time/step=266ms, lr=2.70e-04
+Epoch: [48][600/1718] 	 loss: 0.72637, MAE: 5.93036, time/step=266ms, lr=2.70e-04
+Epoch: [48][700/1718] 	 loss: 0.73289, MAE: 5.99853, time/step=265ms, lr=2.70e-04
+Epoch: [48][800/1718] 	 loss: 0.72973, MAE: 5.96634, time/step=265ms, lr=2.70e-04
+Epoch: [48][900/1718] 	 loss: 0.73117, MAE: 5.98110, time/step=264ms, lr=2.70e-04
+Epoch: [48][1000/1718] 	 loss: 0.73341, MAE: 6.00374, time/step=264ms, lr=2.70e-04
+Epoch: [48][1100/1718] 	 loss: 0.72803, MAE: 5.94940, time/step=264ms, lr=2.70e-04
+Epoch: [48][1200/1718] 	 loss: 0.73362, MAE: 6.00813, time/step=264ms, lr=2.70e-04
+Epoch: [48][1300/1718] 	 loss: 0.73466, MAE: 6.01871, time/step=264ms, lr=2.70e-04
+Epoch: [48][1400/1718] 	 loss: 0.73213, MAE: 5.99312, time/step=264ms, lr=2.70e-04
+Epoch: [48][1500/1718] 	 loss: 0.73237, MAE: 5.99593, time/step=264ms, lr=2.70e-04
+Epoch: [48][1600/1718] 	 loss: 0.73005, MAE: 5.97308, time/step=264ms, lr=2.70e-04
+Epoch: [48][1700/1718] 	 loss: 0.72859, MAE: 5.95960, time/step=264ms, lr=2.70e-04
+Epoch: [48][1717/1718] 	 loss: 0.72878, MAE: 5.96187, time/step=264ms, lr=2.70e-04
+Epoch: [49] Target: [7] train MAE: 5.96187, val MAE: 5.64046, test MAE: 6.92246, Time: 482.65s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [49] Target: [7] EMA val MAE: 5.62944, EMA test MAE: 5.99568, Time: 510.78s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [49][0/1718] 	 loss: 0.26106, MAE: 1.15781, time/step=639ms, lr=2.63e-04
+Epoch: [49][100/1718] 	 loss: 0.67782, MAE: 5.47127, time/step=268ms, lr=2.63e-04
+Epoch: [49][200/1718] 	 loss: 0.69207, MAE: 5.62414, time/step=267ms, lr=2.63e-04
+Epoch: [49][300/1718] 	 loss: 0.68840, MAE: 5.58875, time/step=266ms, lr=2.63e-04
+Epoch: [49][400/1718] 	 loss: 0.68023, MAE: 5.50880, time/step=266ms, lr=2.63e-04
+Epoch: [49][500/1718] 	 loss: 0.68735, MAE: 5.58781, time/step=265ms, lr=2.63e-04
+Epoch: [49][600/1718] 	 loss: 0.68981, MAE: 5.61568, time/step=264ms, lr=2.63e-04
+Epoch: [49][700/1718] 	 loss: 0.69326, MAE: 5.65373, time/step=264ms, lr=2.63e-04
+Epoch: [49][800/1718] 	 loss: 0.70057, MAE: 5.73071, time/step=264ms, lr=2.63e-04
+Epoch: [49][900/1718] 	 loss: 0.70726, MAE: 5.79889, time/step=265ms, lr=2.63e-04
+Epoch: [49][1000/1718] 	 loss: 0.70229, MAE: 5.74646, time/step=265ms, lr=2.63e-04
+Epoch: [49][1100/1718] 	 loss: 0.70790, MAE: 5.80464, time/step=265ms, lr=2.63e-04
+Epoch: [49][1200/1718] 	 loss: 0.71530, MAE: 5.87981, time/step=265ms, lr=2.63e-04
+Epoch: [49][1300/1718] 	 loss: 0.71747, MAE: 5.89951, time/step=265ms, lr=2.63e-04
+Epoch: [49][1400/1718] 	 loss: 0.71563, MAE: 5.87878, time/step=265ms, lr=2.63e-04
+Epoch: [49][1500/1718] 	 loss: 0.71390, MAE: 5.86005, time/step=265ms, lr=2.63e-04
+Epoch: [49][1600/1718] 	 loss: 0.72045, MAE: 5.92661, time/step=265ms, lr=2.63e-04
+Epoch: [49][1700/1718] 	 loss: 0.71944, MAE: 5.91412, time/step=265ms, lr=2.63e-04
+Epoch: [49][1717/1718] 	 loss: 0.71965, MAE: 5.91590, time/step=265ms, lr=2.63e-04
+Epoch: [50] Target: [7] train MAE: 5.91590, val MAE: 5.86613, test MAE: 5.79104, Time: 483.43s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [50] Target: [7] EMA val MAE: 5.97958, EMA test MAE: 5.99940, Time: 511.53s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [50][0/1718] 	 loss: 0.26296, MAE: 1.16707, time/step=721ms, lr=2.55e-04
+Epoch: [50][100/1718] 	 loss: 0.67227, MAE: 5.39918, time/step=269ms, lr=2.55e-04
+Epoch: [50][200/1718] 	 loss: 0.74284, MAE: 6.12132, time/step=266ms, lr=2.55e-04
+Epoch: [50][300/1718] 	 loss: 0.74406, MAE: 6.13228, time/step=266ms, lr=2.55e-04
+Epoch: [50][400/1718] 	 loss: 0.73769, MAE: 6.06272, time/step=266ms, lr=2.55e-04
+Epoch: [50][500/1718] 	 loss: 0.74595, MAE: 6.14489, time/step=267ms, lr=2.55e-04
+Epoch: [50][600/1718] 	 loss: 0.73697, MAE: 6.04914, time/step=266ms, lr=2.55e-04
+Epoch: [50][700/1718] 	 loss: 0.73291, MAE: 6.00573, time/step=265ms, lr=2.55e-04
+Epoch: [50][800/1718] 	 loss: 0.73063, MAE: 5.98203, time/step=265ms, lr=2.55e-04
+Epoch: [50][900/1718] 	 loss: 0.73138, MAE: 5.99087, time/step=265ms, lr=2.55e-04
+Epoch: [50][1000/1718] 	 loss: 0.72989, MAE: 5.97616, time/step=265ms, lr=2.55e-04
+Epoch: [50][1100/1718] 	 loss: 0.72799, MAE: 5.95793, time/step=265ms, lr=2.55e-04
+Epoch: [50][1200/1718] 	 loss: 0.73119, MAE: 5.99263, time/step=265ms, lr=2.55e-04
+Epoch: [50][1300/1718] 	 loss: 0.73351, MAE: 6.01632, time/step=265ms, lr=2.55e-04
+Epoch: [50][1400/1718] 	 loss: 0.73164, MAE: 5.99616, time/step=265ms, lr=2.55e-04
+Epoch: [50][1500/1718] 	 loss: 0.72890, MAE: 5.96851, time/step=265ms, lr=2.55e-04
+Epoch: [50][1600/1718] 	 loss: 0.72734, MAE: 5.95374, time/step=265ms, lr=2.55e-04
+Epoch: [50][1700/1718] 	 loss: 0.73185, MAE: 6.00068, time/step=265ms, lr=2.55e-04
+Epoch: [50][1717/1718] 	 loss: 0.73103, MAE: 5.99217, time/step=265ms, lr=2.55e-04
+Epoch: [51] Target: [7] train MAE: 5.99217, val MAE: 6.49297, test MAE: 6.11878, Time: 483.64s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [51] Target: [7] EMA val MAE: 6.27915, EMA test MAE: 5.38264, Time: 511.67s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [51][0/1718] 	 loss: 0.34444, MAE: 2.00008, time/step=706ms, lr=2.47e-04
+Epoch: [51][100/1718] 	 loss: 0.72728, MAE: 5.95560, time/step=266ms, lr=2.47e-04
+Epoch: [51][200/1718] 	 loss: 0.72365, MAE: 5.91956, time/step=264ms, lr=2.47e-04
+Epoch: [51][300/1718] 	 loss: 0.76773, MAE: 6.36949, time/step=265ms, lr=2.47e-04
+Epoch: [51][400/1718] 	 loss: 0.77942, MAE: 6.47957, time/step=265ms, lr=2.47e-04
+Epoch: [51][500/1718] 	 loss: 0.76789, MAE: 6.35081, time/step=265ms, lr=2.47e-04
+Epoch: [51][600/1718] 	 loss: 0.75385, MAE: 6.20147, time/step=265ms, lr=2.47e-04
+Epoch: [51][700/1718] 	 loss: 0.75358, MAE: 6.19765, time/step=265ms, lr=2.47e-04
+Epoch: [51][800/1718] 	 loss: 0.75137, MAE: 6.17353, time/step=265ms, lr=2.47e-04
+Epoch: [51][900/1718] 	 loss: 0.75256, MAE: 6.18461, time/step=265ms, lr=2.47e-04
+Epoch: [51][1000/1718] 	 loss: 0.74433, MAE: 6.09873, time/step=266ms, lr=2.47e-04
+Epoch: [51][1100/1718] 	 loss: 0.73924, MAE: 6.04720, time/step=266ms, lr=2.47e-04
+Epoch: [51][1200/1718] 	 loss: 0.73679, MAE: 6.02374, time/step=266ms, lr=2.47e-04
+Epoch: [51][1300/1718] 	 loss: 0.73740, MAE: 6.03102, time/step=265ms, lr=2.47e-04
+Epoch: [51][1400/1718] 	 loss: 0.73706, MAE: 6.02823, time/step=265ms, lr=2.47e-04
+Epoch: [51][1500/1718] 	 loss: 0.73660, MAE: 6.02444, time/step=265ms, lr=2.47e-04
+Epoch: [51][1600/1718] 	 loss: 0.73254, MAE: 5.98347, time/step=265ms, lr=2.47e-04
+Epoch: [51][1700/1718] 	 loss: 0.73043, MAE: 5.96347, time/step=265ms, lr=2.47e-04
+Epoch: [51][1717/1718] 	 loss: 0.73047, MAE: 5.96413, time/step=265ms, lr=2.47e-04
+Epoch: [52] Target: [7] train MAE: 5.96413, val MAE: 5.67633, test MAE: 6.08638, Time: 483.51s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [52] Target: [7] EMA val MAE: 6.23496, EMA test MAE: 5.83898, Time: 511.53s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [52][0/1718] 	 loss: 0.31266, MAE: 1.67764, time/step=673ms, lr=2.40e-04
+Epoch: [52][100/1718] 	 loss: 0.74148, MAE: 6.10925, time/step=268ms, lr=2.40e-04
+Epoch: [52][200/1718] 	 loss: 0.70693, MAE: 5.75347, time/step=266ms, lr=2.40e-04
+Epoch: [52][300/1718] 	 loss: 0.70523, MAE: 5.74050, time/step=266ms, lr=2.40e-04
+Epoch: [52][400/1718] 	 loss: 0.72058, MAE: 5.90242, time/step=266ms, lr=2.40e-04
+Epoch: [52][500/1718] 	 loss: 0.71892, MAE: 5.88583, time/step=266ms, lr=2.40e-04
+Epoch: [52][600/1718] 	 loss: 0.72317, MAE: 5.92975, time/step=265ms, lr=2.40e-04
+Epoch: [52][700/1718] 	 loss: 0.73226, MAE: 6.02087, time/step=265ms, lr=2.40e-04
+Epoch: [52][800/1718] 	 loss: 0.73733, MAE: 6.06997, time/step=266ms, lr=2.40e-04
+Epoch: [52][900/1718] 	 loss: 0.73254, MAE: 6.01731, time/step=265ms, lr=2.40e-04
+Epoch: [52][1000/1718] 	 loss: 0.73202, MAE: 6.01028, time/step=265ms, lr=2.40e-04
+Epoch: [52][1100/1718] 	 loss: 0.73011, MAE: 5.98900, time/step=265ms, lr=2.40e-04
+Epoch: [52][1200/1718] 	 loss: 0.72759, MAE: 5.96257, time/step=265ms, lr=2.40e-04
+Epoch: [52][1300/1718] 	 loss: 0.72864, MAE: 5.97292, time/step=265ms, lr=2.40e-04
+Epoch: [52][1400/1718] 	 loss: 0.73039, MAE: 5.99022, time/step=265ms, lr=2.40e-04
+Epoch: [52][1500/1718] 	 loss: 0.73160, MAE: 6.00226, time/step=265ms, lr=2.40e-04
+Epoch: [52][1600/1718] 	 loss: 0.73109, MAE: 5.99603, time/step=265ms, lr=2.40e-04
+Epoch: [52][1700/1718] 	 loss: 0.72780, MAE: 5.96194, time/step=265ms, lr=2.40e-04
+Epoch: [52][1717/1718] 	 loss: 0.72925, MAE: 5.97701, time/step=265ms, lr=2.40e-04
+Epoch: [53] Target: [7] train MAE: 5.97701, val MAE: 6.54102, test MAE: 6.50757, Time: 483.09s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [53] Target: [7] EMA val MAE: 5.79373, EMA test MAE: 5.89520, Time: 511.27s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [53][0/1718] 	 loss: 0.92852, MAE: 8.03721, time/step=716ms, lr=2.32e-04
+Epoch: [53][100/1718] 	 loss: 0.63782, MAE: 5.04282, time/step=265ms, lr=2.32e-04
+Epoch: [53][200/1718] 	 loss: 0.71687, MAE: 5.86250, time/step=265ms, lr=2.32e-04
+Epoch: [53][300/1718] 	 loss: 0.70710, MAE: 5.75908, time/step=264ms, lr=2.32e-04
+Epoch: [53][400/1718] 	 loss: 0.71092, MAE: 5.79979, time/step=264ms, lr=2.32e-04
+Epoch: [53][500/1718] 	 loss: 0.72542, MAE: 5.94873, time/step=264ms, lr=2.32e-04
+Epoch: [53][600/1718] 	 loss: 0.72201, MAE: 5.91221, time/step=264ms, lr=2.32e-04
+Epoch: [53][700/1718] 	 loss: 0.71662, MAE: 5.85717, time/step=264ms, lr=2.32e-04
+Epoch: [53][800/1718] 	 loss: 0.71398, MAE: 5.83144, time/step=264ms, lr=2.32e-04
+Epoch: [53][900/1718] 	 loss: 0.71644, MAE: 5.85934, time/step=264ms, lr=2.32e-04
+Epoch: [53][1000/1718] 	 loss: 0.71601, MAE: 5.85643, time/step=265ms, lr=2.32e-04
+Epoch: [53][1100/1718] 	 loss: 0.71637, MAE: 5.86078, time/step=265ms, lr=2.32e-04
+Epoch: [53][1200/1718] 	 loss: 0.71903, MAE: 5.88816, time/step=265ms, lr=2.32e-04
+Epoch: [53][1300/1718] 	 loss: 0.72032, MAE: 5.90153, time/step=265ms, lr=2.32e-04
+Epoch: [53][1400/1718] 	 loss: 0.72254, MAE: 5.92395, time/step=265ms, lr=2.32e-04
+Epoch: [53][1500/1718] 	 loss: 0.72286, MAE: 5.92634, time/step=265ms, lr=2.32e-04
+Epoch: [53][1600/1718] 	 loss: 0.72353, MAE: 5.93238, time/step=265ms, lr=2.32e-04
+Epoch: [53][1700/1718] 	 loss: 0.72834, MAE: 5.98052, time/step=265ms, lr=2.32e-04
+Epoch: [53][1717/1718] 	 loss: 0.72945, MAE: 5.99163, time/step=265ms, lr=2.32e-04
+Epoch: [54] Target: [7] train MAE: 5.99163, val MAE: 5.88890, test MAE: 6.72028, Time: 483.71s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [54] Target: [7] EMA val MAE: 6.15763, EMA test MAE: 5.72880, Time: 511.79s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [54][0/1718] 	 loss: 0.59428, MAE: 4.56045, time/step=649ms, lr=2.24e-04
+Epoch: [54][100/1718] 	 loss: 0.75268, MAE: 6.19215, time/step=267ms, lr=2.24e-04
+Epoch: [54][200/1718] 	 loss: 0.73188, MAE: 5.97673, time/step=267ms, lr=2.24e-04
+Epoch: [54][300/1718] 	 loss: 0.74805, MAE: 6.14357, time/step=266ms, lr=2.24e-04
+Epoch: [54][400/1718] 	 loss: 0.75460, MAE: 6.20944, time/step=266ms, lr=2.24e-04
+Epoch: [54][500/1718] 	 loss: 0.74279, MAE: 6.08491, time/step=266ms, lr=2.24e-04
+Epoch: [54][600/1718] 	 loss: 0.74037, MAE: 6.05993, time/step=265ms, lr=2.24e-04
+Epoch: [54][700/1718] 	 loss: 0.73733, MAE: 6.02913, time/step=267ms, lr=2.24e-04
+Epoch: [54][800/1718] 	 loss: 0.73345, MAE: 5.98996, time/step=266ms, lr=2.24e-04
+Epoch: [54][900/1718] 	 loss: 0.73807, MAE: 6.03838, time/step=266ms, lr=2.24e-04
+Epoch: [54][1000/1718] 	 loss: 0.73453, MAE: 6.00280, time/step=266ms, lr=2.24e-04
+Epoch: [54][1100/1718] 	 loss: 0.72630, MAE: 5.92009, time/step=265ms, lr=2.24e-04
+Epoch: [54][1200/1718] 	 loss: 0.72437, MAE: 5.90361, time/step=265ms, lr=2.24e-04
+Epoch: [54][1300/1718] 	 loss: 0.72332, MAE: 5.89579, time/step=265ms, lr=2.24e-04
+Epoch: [54][1400/1718] 	 loss: 0.72363, MAE: 5.90217, time/step=265ms, lr=2.24e-04
+Epoch: [54][1500/1718] 	 loss: 0.72386, MAE: 5.90684, time/step=265ms, lr=2.24e-04
+Epoch: [54][1600/1718] 	 loss: 0.72248, MAE: 5.89470, time/step=265ms, lr=2.24e-04
+Epoch: [54][1700/1718] 	 loss: 0.72555, MAE: 5.92855, time/step=265ms, lr=2.24e-04
+Epoch: [54][1717/1718] 	 loss: 0.72702, MAE: 5.94392, time/step=265ms, lr=2.24e-04
+Epoch: [55] Target: [7] train MAE: 5.94392, val MAE: 5.45912, test MAE: 6.05433, Time: 483.01s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [55] Target: [7] EMA val MAE: 5.96067, EMA test MAE: 6.05143, Time: 511.08s
+Best EMA -- epoch=47, val MAE: 5.59433, test MAE: 5.39195
+
+Epoch: [55][0/1718] 	 loss: 0.93802, MAE: 8.13757, time/step=600ms, lr=2.17e-04
+Epoch: [55][100/1718] 	 loss: 0.70986, MAE: 5.78024, time/step=270ms, lr=2.17e-04
+Epoch: [55][200/1718] 	 loss: 0.69781, MAE: 5.65495, time/step=270ms, lr=2.17e-04
+Epoch: [55][300/1718] 	 loss: 0.69769, MAE: 5.65884, time/step=268ms, lr=2.17e-04
+Epoch: [55][400/1718] 	 loss: 0.70479, MAE: 5.73618, time/step=267ms, lr=2.17e-04
+Epoch: [55][500/1718] 	 loss: 0.70752, MAE: 5.76450, time/step=266ms, lr=2.17e-04
+Epoch: [55][600/1718] 	 loss: 0.70051, MAE: 5.69398, time/step=266ms, lr=2.17e-04
+Epoch: [55][700/1718] 	 loss: 0.70712, MAE: 5.76395, time/step=266ms, lr=2.17e-04
+Epoch: [55][800/1718] 	 loss: 0.70692, MAE: 5.76300, time/step=266ms, lr=2.17e-04
+Epoch: [55][900/1718] 	 loss: 0.70751, MAE: 5.77079, time/step=266ms, lr=2.17e-04
+Epoch: [55][1000/1718] 	 loss: 0.71055, MAE: 5.80372, time/step=266ms, lr=2.17e-04
+Epoch: [55][1100/1718] 	 loss: 0.71420, MAE: 5.84174, time/step=265ms, lr=2.17e-04
+Epoch: [55][1200/1718] 	 loss: 0.71607, MAE: 5.86076, time/step=265ms, lr=2.17e-04
+Epoch: [55][1300/1718] 	 loss: 0.71632, MAE: 5.86300, time/step=265ms, lr=2.17e-04
+Epoch: [55][1400/1718] 	 loss: 0.71814, MAE: 5.88086, time/step=265ms, lr=2.17e-04
+Epoch: [55][1500/1718] 	 loss: 0.72051, MAE: 5.90460, time/step=265ms, lr=2.17e-04
+Epoch: [55][1600/1718] 	 loss: 0.71804, MAE: 5.87858, time/step=265ms, lr=2.17e-04
+Epoch: [55][1700/1718] 	 loss: 0.71997, MAE: 5.89842, time/step=265ms, lr=2.17e-04
+Epoch: [55][1717/1718] 	 loss: 0.71891, MAE: 5.88741, time/step=265ms, lr=2.17e-04
+Epoch: [56] Target: [7] train MAE: 5.88741, val MAE: 7.15816, test MAE: 6.47313, Time: 482.99s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [56] Target: [7] EMA val MAE: 5.18659, EMA test MAE: 5.69109, Time: 511.10s
+Best EMA -- epoch=56, val MAE: 5.18659, test MAE: 5.69109
+
+Epoch: [56][0/1718] 	 loss: 0.67036, MAE: 5.37866, time/step=672ms, lr=2.09e-04
+Epoch: [56][100/1718] 	 loss: 0.70814, MAE: 5.77172, time/step=267ms, lr=2.09e-04
+Epoch: [56][200/1718] 	 loss: 0.69411, MAE: 5.63283, time/step=266ms, lr=2.09e-04
+Epoch: [56][300/1718] 	 loss: 0.69652, MAE: 5.66150, time/step=265ms, lr=2.09e-04
+Epoch: [56][400/1718] 	 loss: 0.70526, MAE: 5.75307, time/step=265ms, lr=2.09e-04
+Epoch: [56][500/1718] 	 loss: 0.70353, MAE: 5.73708, time/step=265ms, lr=2.09e-04
+Epoch: [56][600/1718] 	 loss: 0.71646, MAE: 5.87095, time/step=266ms, lr=2.09e-04
+Epoch: [56][700/1718] 	 loss: 0.72514, MAE: 5.95897, time/step=266ms, lr=2.09e-04
+Epoch: [56][800/1718] 	 loss: 0.72144, MAE: 5.91941, time/step=266ms, lr=2.09e-04
+Epoch: [56][900/1718] 	 loss: 0.71837, MAE: 5.88769, time/step=266ms, lr=2.09e-04
+Epoch: [56][1000/1718] 	 loss: 0.72039, MAE: 5.90809, time/step=266ms, lr=2.09e-04
+Epoch: [56][1100/1718] 	 loss: 0.73095, MAE: 6.01577, time/step=266ms, lr=2.09e-04
+Epoch: [56][1200/1718] 	 loss: 0.73409, MAE: 6.04460, time/step=266ms, lr=2.09e-04
+Epoch: [56][1300/1718] 	 loss: 0.72998, MAE: 5.99920, time/step=266ms, lr=2.09e-04
+Epoch: [56][1400/1718] 	 loss: 0.72683, MAE: 5.96535, time/step=266ms, lr=2.09e-04
+Epoch: [56][1500/1718] 	 loss: 0.73098, MAE: 6.00711, time/step=266ms, lr=2.09e-04
+Epoch: [56][1600/1718] 	 loss: 0.73042, MAE: 5.99950, time/step=265ms, lr=2.09e-04
+Epoch: [56][1700/1718] 	 loss: 0.72779, MAE: 5.97113, time/step=266ms, lr=2.09e-04
+Epoch: [56][1717/1718] 	 loss: 0.72838, MAE: 5.97706, time/step=266ms, lr=2.09e-04
+Epoch: [57] Target: [7] train MAE: 5.97706, val MAE: 6.81208, test MAE: 6.13398, Time: 484.54s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [57] Target: [7] EMA val MAE: 5.60398, EMA test MAE: 5.25211, Time: 512.68s
+Best EMA -- epoch=56, val MAE: 5.18659, test MAE: 5.69109
+
+Epoch: [57][0/1718] 	 loss: 0.59280, MAE: 4.56353, time/step=696ms, lr=2.02e-04
+Epoch: [57][100/1718] 	 loss: 0.71044, MAE: 5.78228, time/step=269ms, lr=2.02e-04
+Epoch: [57][200/1718] 	 loss: 0.69691, MAE: 5.64443, time/step=265ms, lr=2.02e-04
+Epoch: [57][300/1718] 	 loss: 0.70806, MAE: 5.76242, time/step=266ms, lr=2.02e-04
+Epoch: [57][400/1718] 	 loss: 0.70197, MAE: 5.70215, time/step=264ms, lr=2.02e-04
+Epoch: [57][500/1718] 	 loss: 0.71917, MAE: 5.88028, time/step=264ms, lr=2.02e-04
+Epoch: [57][600/1718] 	 loss: 0.71664, MAE: 5.85393, time/step=264ms, lr=2.02e-04
+Epoch: [57][700/1718] 	 loss: 0.71532, MAE: 5.84065, time/step=264ms, lr=2.02e-04
+Epoch: [57][800/1718] 	 loss: 0.71435, MAE: 5.83092, time/step=263ms, lr=2.02e-04
+Epoch: [57][900/1718] 	 loss: 0.71481, MAE: 5.83594, time/step=263ms, lr=2.02e-04
+Epoch: [57][1000/1718] 	 loss: 0.71455, MAE: 5.83355, time/step=263ms, lr=2.02e-04
+Epoch: [57][1100/1718] 	 loss: 0.71548, MAE: 5.84341, time/step=263ms, lr=2.02e-04
+Epoch: [57][1200/1718] 	 loss: 0.71287, MAE: 5.81730, time/step=263ms, lr=2.02e-04
+Epoch: [57][1300/1718] 	 loss: 0.70795, MAE: 5.76785, time/step=263ms, lr=2.02e-04
+Epoch: [57][1400/1718] 	 loss: 0.71321, MAE: 5.82422, time/step=263ms, lr=2.02e-04
+Epoch: [57][1500/1718] 	 loss: 0.71291, MAE: 5.82192, time/step=264ms, lr=2.02e-04
+Epoch: [57][1600/1718] 	 loss: 0.71470, MAE: 5.84076, time/step=264ms, lr=2.02e-04
+Epoch: [57][1700/1718] 	 loss: 0.71417, MAE: 5.83559, time/step=264ms, lr=2.02e-04
+Epoch: [57][1717/1718] 	 loss: 0.71537, MAE: 5.84807, time/step=264ms, lr=2.02e-04
+Epoch: [58] Target: [7] train MAE: 5.84807, val MAE: 5.28479, test MAE: 4.99332, Time: 481.73s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [58] Target: [7] EMA val MAE: 6.18170, EMA test MAE: 5.96658, Time: 509.87s
+Best EMA -- epoch=56, val MAE: 5.18659, test MAE: 5.69109
+
+Epoch: [58][0/1718] 	 loss: 0.77838, MAE: 6.50552, time/step=733ms, lr=1.94e-04
+Epoch: [58][100/1718] 	 loss: 0.69385, MAE: 5.63676, time/step=267ms, lr=1.94e-04
+Epoch: [58][200/1718] 	 loss: 0.71441, MAE: 5.85068, time/step=264ms, lr=1.94e-04
+Epoch: [58][300/1718] 	 loss: 0.70117, MAE: 5.71465, time/step=265ms, lr=1.94e-04
+Epoch: [58][400/1718] 	 loss: 0.69425, MAE: 5.64630, time/step=264ms, lr=1.94e-04
+Epoch: [58][500/1718] 	 loss: 0.70664, MAE: 5.77608, time/step=264ms, lr=1.94e-04
+Epoch: [58][600/1718] 	 loss: 0.70657, MAE: 5.77507, time/step=264ms, lr=1.94e-04
+Epoch: [58][700/1718] 	 loss: 0.71111, MAE: 5.82228, time/step=264ms, lr=1.94e-04
+Epoch: [58][800/1718] 	 loss: 0.71279, MAE: 5.83971, time/step=264ms, lr=1.94e-04
+Epoch: [58][900/1718] 	 loss: 0.70955, MAE: 5.80643, time/step=264ms, lr=1.94e-04
+Epoch: [58][1000/1718] 	 loss: 0.71675, MAE: 5.88059, time/step=264ms, lr=1.94e-04
+Epoch: [58][1100/1718] 	 loss: 0.72018, MAE: 5.91510, time/step=264ms, lr=1.94e-04
+Epoch: [58][1200/1718] 	 loss: 0.72190, MAE: 5.93138, time/step=264ms, lr=1.94e-04
+Epoch: [58][1300/1718] 	 loss: 0.72249, MAE: 5.93580, time/step=264ms, lr=1.94e-04
+Epoch: [58][1400/1718] 	 loss: 0.71840, MAE: 5.89249, time/step=264ms, lr=1.94e-04
+Epoch: [58][1500/1718] 	 loss: 0.72186, MAE: 5.92767, time/step=264ms, lr=1.94e-04
+Epoch: [58][1600/1718] 	 loss: 0.72263, MAE: 5.93471, time/step=264ms, lr=1.94e-04
+Epoch: [58][1700/1718] 	 loss: 0.72146, MAE: 5.92155, time/step=264ms, lr=1.94e-04
+Epoch: [58][1717/1718] 	 loss: 0.72189, MAE: 5.92585, time/step=264ms, lr=1.94e-04
+Epoch: [59] Target: [7] train MAE: 5.92585, val MAE: 5.64649, test MAE: 5.54237, Time: 482.38s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [59] Target: [7] EMA val MAE: 5.75493, EMA test MAE: 5.91970, Time: 510.52s
+Best EMA -- epoch=56, val MAE: 5.18659, test MAE: 5.69109
+
+Epoch: [59][0/1718] 	 loss: 0.49777, MAE: 3.59464, time/step=691ms, lr=1.87e-04
+Epoch: [59][100/1718] 	 loss: 0.75161, MAE: 6.21335, time/step=278ms, lr=1.87e-04
+Epoch: [59][200/1718] 	 loss: 0.75793, MAE: 6.27566, time/step=270ms, lr=1.87e-04
+Epoch: [59][300/1718] 	 loss: 0.73422, MAE: 6.02875, time/step=267ms, lr=1.87e-04
+Epoch: [59][400/1718] 	 loss: 0.74331, MAE: 6.12301, time/step=267ms, lr=1.87e-04
+Epoch: [59][500/1718] 	 loss: 0.73101, MAE: 5.99596, time/step=266ms, lr=1.87e-04
+Epoch: [59][600/1718] 	 loss: 0.72621, MAE: 5.94727, time/step=266ms, lr=1.87e-04
+Epoch: [59][700/1718] 	 loss: 0.72384, MAE: 5.92401, time/step=265ms, lr=1.87e-04
+Epoch: [59][800/1718] 	 loss: 0.71574, MAE: 5.84235, time/step=265ms, lr=1.87e-04
+Epoch: [59][900/1718] 	 loss: 0.71901, MAE: 5.87805, time/step=265ms, lr=1.87e-04
+Epoch: [59][1000/1718] 	 loss: 0.71983, MAE: 5.88780, time/step=265ms, lr=1.87e-04
+Epoch: [59][1100/1718] 	 loss: 0.71995, MAE: 5.88951, time/step=265ms, lr=1.87e-04
+Epoch: [59][1200/1718] 	 loss: 0.72261, MAE: 5.91678, time/step=264ms, lr=1.87e-04
+Epoch: [59][1300/1718] 	 loss: 0.71719, MAE: 5.86088, time/step=264ms, lr=1.87e-04
+Epoch: [59][1400/1718] 	 loss: 0.71928, MAE: 5.88319, time/step=264ms, lr=1.87e-04
+Epoch: [59][1500/1718] 	 loss: 0.72028, MAE: 5.89369, time/step=264ms, lr=1.87e-04
+Epoch: [59][1600/1718] 	 loss: 0.72023, MAE: 5.89311, time/step=264ms, lr=1.87e-04
+Epoch: [59][1700/1718] 	 loss: 0.71923, MAE: 5.88268, time/step=265ms, lr=1.87e-04
+Epoch: [59][1717/1718] 	 loss: 0.71938, MAE: 5.88419, time/step=265ms, lr=1.87e-04
+Epoch: [60] Target: [7] train MAE: 5.88419, val MAE: 5.46203, test MAE: 5.72220, Time: 483.50s
+Best -- epoch=39, train MAE: 6.05655, val MAE: 5.16338, test MAE: 6.31122
+
+Epoch: [60] Target: [7] EMA val MAE: 5.65790, EMA test MAE: 5.65768, Time: 511.61s
+Best EMA -- epoch=56, val MAE: 5.18659, test MAE: 5.69109
+
+Epoch: [60][0/1718] 	 loss: 0.69803, MAE: 5.66155, time/step=696ms, lr=1.79e-04
+Epoch: [60][100/1718] 	 loss: 0.77551, MAE: 6.46388, time/step=271ms, lr=1.79e-04
+Epoch: [60][200/1718] 	 loss: 0.72832, MAE: 5.97306, time/step=268ms, lr=1.79e-04
+Epoch: [60][300/1718] 	 loss: 0.73912, MAE: 6.08384, time/step=267ms, lr=1.79e-04
+Epoch: [60][400/1718] 	 loss: 0.75083, MAE: 6.20162, time/step=267ms, lr=1.79e-04
+Epoch: [60][500/1718] 	 loss: 0.72593, MAE: 5.94344, time/step=266ms, lr=1.79e-04
+Epoch: [60][600/1718] 	 loss: 0.71670, MAE: 5.85071, time/step=265ms, lr=1.79e-04
+Epoch: [60][700/1718] 	 loss: 0.71557, MAE: 5.84216, time/step=265ms, lr=1.79e-04
+Epoch: [60][800/1718] 	 loss: 0.72182, MAE: 5.90773, time/step=265ms, lr=1.79e-04
+Epoch: [60][900/1718] 	 loss: 0.71969, MAE: 5.88712, time/step=265ms, lr=1.79e-04
+Epoch: [60][1000/1718] 	 loss: 0.72171, MAE: 5.90825, time/step=264ms, lr=1.79e-04
+Epoch: [60][1100/1718] 	 loss: 0.72855, MAE: 5.97858, time/step=264ms, lr=1.79e-04
+Epoch: [60][1200/1718] 	 loss: 0.72728, MAE: 5.96418, time/step=265ms, lr=1.79e-04
+Epoch: [60][1300/1718] 	 loss: 0.73180, MAE: 6.00954, time/step=265ms, lr=1.79e-04
+Epoch: [60][1400/1718] 	 loss: 0.73136, MAE: 6.00342, time/step=265ms, lr=1.79e-04
+Epoch: [60][1500/1718] 	 loss: 0.72660, MAE: 5.95358, time/step=265ms, lr=1.79e-04
+Epoch: [60][1600/1718] 	 loss: 0.72395, MAE: 5.92632, time/step=265ms, lr=1.79e-04
+Epoch: [60][1700/1718] 	 loss: 0.72183, MAE: 5.90481, time/step=265ms, lr=1.79e-04
+Epoch: [60][1717/1718] 	 loss: 0.72232, MAE: 5.91003, time/step=265ms, lr=1.79e-04
+Epoch: [61] Target: [7] train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775, Time: 483.36s
+Best -- epoch=61, train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775
+
+Epoch: [61] Target: [7] EMA val MAE: 5.64088, EMA test MAE: 5.81301, Time: 511.49s
+Best EMA -- epoch=56, val MAE: 5.18659, test MAE: 5.69109
+
+Epoch: [61][0/1718] 	 loss: 0.33092, MAE: 1.87738, time/step=651ms, lr=1.72e-04
+Epoch: [61][100/1718] 	 loss: 0.71180, MAE: 5.81187, time/step=269ms, lr=1.72e-04
+Epoch: [61][200/1718] 	 loss: 0.70397, MAE: 5.73138, time/step=267ms, lr=1.72e-04
+Epoch: [61][300/1718] 	 loss: 0.71925, MAE: 5.88749, time/step=266ms, lr=1.72e-04
+Epoch: [61][400/1718] 	 loss: 0.72696, MAE: 5.96589, time/step=266ms, lr=1.72e-04
+Epoch: [61][500/1718] 	 loss: 0.72666, MAE: 5.96122, time/step=266ms, lr=1.72e-04
+Epoch: [61][600/1718] 	 loss: 0.72132, MAE: 5.90467, time/step=265ms, lr=1.72e-04
+Epoch: [61][700/1718] 	 loss: 0.72225, MAE: 5.91459, time/step=266ms, lr=1.72e-04
+Epoch: [61][800/1718] 	 loss: 0.72231, MAE: 5.91443, time/step=265ms, lr=1.72e-04
+Epoch: [61][900/1718] 	 loss: 0.72134, MAE: 5.90367, time/step=266ms, lr=1.72e-04
+Epoch: [61][1000/1718] 	 loss: 0.71958, MAE: 5.88557, time/step=265ms, lr=1.72e-04
+Epoch: [61][1100/1718] 	 loss: 0.71408, MAE: 5.82930, time/step=265ms, lr=1.72e-04
+Epoch: [61][1200/1718] 	 loss: 0.71228, MAE: 5.81200, time/step=266ms, lr=1.72e-04
+Epoch: [61][1300/1718] 	 loss: 0.71379, MAE: 5.82895, time/step=265ms, lr=1.72e-04
+Epoch: [61][1400/1718] 	 loss: 0.71092, MAE: 5.80058, time/step=265ms, lr=1.72e-04
+Epoch: [61][1500/1718] 	 loss: 0.71106, MAE: 5.80312, time/step=265ms, lr=1.72e-04
+Epoch: [61][1600/1718] 	 loss: 0.70837, MAE: 5.77648, time/step=265ms, lr=1.72e-04
+Epoch: [61][1700/1718] 	 loss: 0.70803, MAE: 5.77461, time/step=265ms, lr=1.72e-04
+Epoch: [61][1717/1718] 	 loss: 0.70833, MAE: 5.77791, time/step=265ms, lr=1.72e-04
+Epoch: [62] Target: [7] train MAE: 5.77791, val MAE: 6.19213, test MAE: 5.86572, Time: 483.50s
+Best -- epoch=61, train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775
+
+Epoch: [62] Target: [7] EMA val MAE: 6.13975, EMA test MAE: 6.68006, Time: 511.60s
+Best EMA -- epoch=56, val MAE: 5.18659, test MAE: 5.69109
+
+Epoch: [62][0/1718] 	 loss: 0.21311, MAE: 0.68354, time/step=657ms, lr=1.65e-04
+Epoch: [62][100/1718] 	 loss: 0.69417, MAE: 5.65572, time/step=268ms, lr=1.65e-04
+Epoch: [62][200/1718] 	 loss: 0.68770, MAE: 5.59031, time/step=266ms, lr=1.65e-04
+Epoch: [62][300/1718] 	 loss: 0.73438, MAE: 6.07010, time/step=265ms, lr=1.65e-04
+Epoch: [62][400/1718] 	 loss: 0.73904, MAE: 6.11251, time/step=265ms, lr=1.65e-04
+Epoch: [62][500/1718] 	 loss: 0.73580, MAE: 6.07561, time/step=265ms, lr=1.65e-04
+Epoch: [62][600/1718] 	 loss: 0.73809, MAE: 6.09589, time/step=264ms, lr=1.65e-04
+Epoch: [62][700/1718] 	 loss: 0.74832, MAE: 6.19604, time/step=264ms, lr=1.65e-04
+Epoch: [62][800/1718] 	 loss: 0.74139, MAE: 6.11977, time/step=264ms, lr=1.65e-04
+Epoch: [62][900/1718] 	 loss: 0.74426, MAE: 6.14572, time/step=264ms, lr=1.65e-04
+Epoch: [62][1000/1718] 	 loss: 0.73732, MAE: 6.07142, time/step=264ms, lr=1.65e-04
+Epoch: [62][1100/1718] 	 loss: 0.73364, MAE: 6.03236, time/step=264ms, lr=1.65e-04
+Epoch: [62][1200/1718] 	 loss: 0.73426, MAE: 6.03737, time/step=264ms, lr=1.65e-04
+Epoch: [62][1300/1718] 	 loss: 0.72852, MAE: 5.97739, time/step=264ms, lr=1.65e-04
+Epoch: [62][1400/1718] 	 loss: 0.72743, MAE: 5.96627, time/step=264ms, lr=1.65e-04
+Epoch: [62][1500/1718] 	 loss: 0.72522, MAE: 5.94385, time/step=264ms, lr=1.65e-04
+Epoch: [62][1600/1718] 	 loss: 0.72639, MAE: 5.95636, time/step=264ms, lr=1.65e-04
+Epoch: [62][1700/1718] 	 loss: 0.72757, MAE: 5.96853, time/step=264ms, lr=1.65e-04
+Epoch: [62][1717/1718] 	 loss: 0.72715, MAE: 5.96417, time/step=264ms, lr=1.65e-04
+Epoch: [63] Target: [7] train MAE: 5.96417, val MAE: 5.60277, test MAE: 5.66773, Time: 481.70s
+Best -- epoch=61, train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775
+
+Epoch: [63] Target: [7] EMA val MAE: 6.07763, EMA test MAE: 5.42096, Time: 509.80s
+Best EMA -- epoch=56, val MAE: 5.18659, test MAE: 5.69109
+
+Epoch: [63][0/1718] 	 loss: 0.22795, MAE: 0.80548, time/step=695ms, lr=1.58e-04
+Epoch: [63][100/1718] 	 loss: 0.75797, MAE: 6.27745, time/step=280ms, lr=1.58e-04
+Epoch: [63][200/1718] 	 loss: 0.73012, MAE: 5.98767, time/step=272ms, lr=1.58e-04
+Epoch: [63][300/1718] 	 loss: 0.72385, MAE: 5.92280, time/step=269ms, lr=1.58e-04
+Epoch: [63][400/1718] 	 loss: 0.73101, MAE: 5.99642, time/step=268ms, lr=1.58e-04
+Epoch: [63][500/1718] 	 loss: 0.73378, MAE: 6.02420, time/step=267ms, lr=1.58e-04
+Epoch: [63][600/1718] 	 loss: 0.73379, MAE: 6.02301, time/step=267ms, lr=1.58e-04
+Epoch: [63][700/1718] 	 loss: 0.72989, MAE: 5.98233, time/step=267ms, lr=1.58e-04
+Epoch: [63][800/1718] 	 loss: 0.73410, MAE: 6.02503, time/step=267ms, lr=1.58e-04
+Epoch: [63][900/1718] 	 loss: 0.72515, MAE: 5.93236, time/step=266ms, lr=1.58e-04
+Epoch: [63][1000/1718] 	 loss: 0.72186, MAE: 5.89906, time/step=266ms, lr=1.58e-04
+Epoch: [63][1100/1718] 	 loss: 0.72325, MAE: 5.91417, time/step=266ms, lr=1.58e-04
+Epoch: [63][1200/1718] 	 loss: 0.71757, MAE: 5.85653, time/step=266ms, lr=1.58e-04
+Epoch: [63][1300/1718] 	 loss: 0.71779, MAE: 5.86025, time/step=266ms, lr=1.58e-04
+Epoch: [63][1400/1718] 	 loss: 0.72014, MAE: 5.88558, time/step=266ms, lr=1.58e-04
+Epoch: [63][1500/1718] 	 loss: 0.71573, MAE: 5.84087, time/step=266ms, lr=1.58e-04
+Epoch: [63][1600/1718] 	 loss: 0.71781, MAE: 5.86361, time/step=266ms, lr=1.58e-04
+Epoch: [63][1700/1718] 	 loss: 0.72103, MAE: 5.89730, time/step=266ms, lr=1.58e-04
+Epoch: [63][1717/1718] 	 loss: 0.72018, MAE: 5.88850, time/step=266ms, lr=1.58e-04
+Epoch: [64] Target: [7] train MAE: 5.88850, val MAE: 5.70046, test MAE: 6.11213, Time: 484.62s
+Best -- epoch=61, train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775
+
+Epoch: [64] Target: [7] EMA val MAE: 4.94951, EMA test MAE: 5.78959, Time: 512.78s
+Best EMA -- epoch=64, val MAE: 4.94951, test MAE: 5.78959
+
+Epoch: [64][0/1718] 	 loss: 0.78104, MAE: 6.51929, time/step=678ms, lr=1.51e-04
+Epoch: [64][100/1718] 	 loss: 0.75159, MAE: 6.21365, time/step=267ms, lr=1.51e-04
+Epoch: [64][200/1718] 	 loss: 0.72154, MAE: 5.90273, time/step=267ms, lr=1.51e-04
+Epoch: [64][300/1718] 	 loss: 0.72779, MAE: 5.96896, time/step=265ms, lr=1.51e-04
+Epoch: [64][400/1718] 	 loss: 0.71931, MAE: 5.88128, time/step=266ms, lr=1.51e-04
+Epoch: [64][500/1718] 	 loss: 0.73241, MAE: 6.01621, time/step=265ms, lr=1.51e-04
+Epoch: [64][600/1718] 	 loss: 0.71477, MAE: 5.83413, time/step=265ms, lr=1.51e-04
+Epoch: [64][700/1718] 	 loss: 0.71682, MAE: 5.85689, time/step=265ms, lr=1.51e-04
+Epoch: [64][800/1718] 	 loss: 0.71950, MAE: 5.88524, time/step=265ms, lr=1.51e-04
+Epoch: [64][900/1718] 	 loss: 0.72361, MAE: 5.92732, time/step=265ms, lr=1.51e-04
+Epoch: [64][1000/1718] 	 loss: 0.73381, MAE: 6.03150, time/step=265ms, lr=1.51e-04
+Epoch: [64][1100/1718] 	 loss: 0.73479, MAE: 6.03926, time/step=265ms, lr=1.51e-04
+Epoch: [64][1200/1718] 	 loss: 0.73555, MAE: 6.04497, time/step=265ms, lr=1.51e-04
+Epoch: [64][1300/1718] 	 loss: 0.73778, MAE: 6.06558, time/step=265ms, lr=1.51e-04
+Epoch: [64][1400/1718] 	 loss: 0.73570, MAE: 6.04228, time/step=265ms, lr=1.51e-04
+Epoch: [64][1500/1718] 	 loss: 0.73718, MAE: 6.05558, time/step=265ms, lr=1.51e-04
+Epoch: [64][1600/1718] 	 loss: 0.73845, MAE: 6.06643, time/step=265ms, lr=1.51e-04
+Epoch: [64][1700/1718] 	 loss: 0.73640, MAE: 6.04320, time/step=265ms, lr=1.51e-04
+Epoch: [64][1717/1718] 	 loss: 0.73458, MAE: 6.02414, time/step=265ms, lr=1.51e-04
+Epoch: [65] Target: [7] train MAE: 6.02414, val MAE: 5.85359, test MAE: 5.84092, Time: 483.51s
+Best -- epoch=61, train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775
+
+Epoch: [65] Target: [7] EMA val MAE: 6.20987, EMA test MAE: 6.13309, Time: 511.68s
+Best EMA -- epoch=64, val MAE: 4.94951, test MAE: 5.78959
+
+Epoch: [65][0/1718] 	 loss: 0.49072, MAE: 3.48120, time/step=690ms, lr=1.44e-04
+Epoch: [65][100/1718] 	 loss: 0.73605, MAE: 6.01364, time/step=267ms, lr=1.44e-04
+Epoch: [65][200/1718] 	 loss: 0.75709, MAE: 6.23134, time/step=266ms, lr=1.44e-04
+Epoch: [65][300/1718] 	 loss: 0.73540, MAE: 6.00528, time/step=266ms, lr=1.44e-04
+Epoch: [65][400/1718] 	 loss: 0.72859, MAE: 5.93613, time/step=265ms, lr=1.44e-04
+Epoch: [65][500/1718] 	 loss: 0.73662, MAE: 6.01879, time/step=265ms, lr=1.44e-04
+Epoch: [65][600/1718] 	 loss: 0.72651, MAE: 5.91450, time/step=265ms, lr=1.44e-04
+Epoch: [65][700/1718] 	 loss: 0.72187, MAE: 5.86835, time/step=265ms, lr=1.44e-04
+Epoch: [65][800/1718] 	 loss: 0.72547, MAE: 5.90661, time/step=264ms, lr=1.44e-04
+Epoch: [65][900/1718] 	 loss: 0.72551, MAE: 5.90758, time/step=264ms, lr=1.44e-04
+Epoch: [65][1000/1718] 	 loss: 0.72453, MAE: 5.89811, time/step=264ms, lr=1.44e-04
+Epoch: [65][1100/1718] 	 loss: 0.72383, MAE: 5.89169, time/step=264ms, lr=1.44e-04
+Epoch: [65][1200/1718] 	 loss: 0.72137, MAE: 5.86734, time/step=265ms, lr=1.44e-04
+Epoch: [65][1300/1718] 	 loss: 0.72480, MAE: 5.90318, time/step=265ms, lr=1.44e-04
+Epoch: [65][1400/1718] 	 loss: 0.73039, MAE: 5.96070, time/step=264ms, lr=1.44e-04
+Epoch: [65][1500/1718] 	 loss: 0.73058, MAE: 5.96208, time/step=264ms, lr=1.44e-04
+Epoch: [65][1600/1718] 	 loss: 0.72970, MAE: 5.95278, time/step=264ms, lr=1.44e-04
+Epoch: [65][1700/1718] 	 loss: 0.72819, MAE: 5.93704, time/step=264ms, lr=1.44e-04
+Epoch: [65][1717/1718] 	 loss: 0.72622, MAE: 5.91670, time/step=264ms, lr=1.44e-04
+Epoch: [66] Target: [7] train MAE: 5.91670, val MAE: 5.82235, test MAE: 6.04384, Time: 481.75s
+Best -- epoch=61, train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775
+
+Epoch: [66] Target: [7] EMA val MAE: 5.83444, EMA test MAE: 5.95643, Time: 509.85s
+Best EMA -- epoch=64, val MAE: 4.94951, test MAE: 5.78959
+
+Epoch: [66][0/1718] 	 loss: 0.66446, MAE: 5.28279, time/step=633ms, lr=1.37e-04
+Epoch: [66][100/1718] 	 loss: 0.69222, MAE: 5.57648, time/step=268ms, lr=1.37e-04
+Epoch: [66][200/1718] 	 loss: 0.72200, MAE: 5.88416, time/step=267ms, lr=1.37e-04
+Epoch: [66][300/1718] 	 loss: 0.70702, MAE: 5.73052, time/step=266ms, lr=1.37e-04
+Epoch: [66][400/1718] 	 loss: 0.70214, MAE: 5.68194, time/step=265ms, lr=1.37e-04
+Epoch: [66][500/1718] 	 loss: 0.71847, MAE: 5.85172, time/step=265ms, lr=1.37e-04
+Epoch: [66][600/1718] 	 loss: 0.72360, MAE: 5.90348, time/step=265ms, lr=1.37e-04
+Epoch: [66][700/1718] 	 loss: 0.73434, MAE: 6.01240, time/step=264ms, lr=1.37e-04
+Epoch: [66][800/1718] 	 loss: 0.73909, MAE: 6.05906, time/step=265ms, lr=1.37e-04
+Epoch: [66][900/1718] 	 loss: 0.73984, MAE: 6.06379, time/step=264ms, lr=1.37e-04
+Epoch: [66][1000/1718] 	 loss: 0.74440, MAE: 6.10841, time/step=264ms, lr=1.37e-04
+Epoch: [66][1100/1718] 	 loss: 0.74451, MAE: 6.10639, time/step=264ms, lr=1.37e-04
+Epoch: [66][1200/1718] 	 loss: 0.73897, MAE: 6.04709, time/step=264ms, lr=1.37e-04
+Epoch: [66][1300/1718] 	 loss: 0.73714, MAE: 6.02665, time/step=265ms, lr=1.37e-04
+Epoch: [66][1400/1718] 	 loss: 0.73723, MAE: 6.02661, time/step=265ms, lr=1.37e-04
+Epoch: [66][1500/1718] 	 loss: 0.73567, MAE: 6.00933, time/step=265ms, lr=1.37e-04
+Epoch: [66][1600/1718] 	 loss: 0.73971, MAE: 6.04994, time/step=265ms, lr=1.37e-04
+Epoch: [66][1700/1718] 	 loss: 0.73499, MAE: 6.00006, time/step=265ms, lr=1.37e-04
+Epoch: [66][1717/1718] 	 loss: 0.73597, MAE: 6.01000, time/step=265ms, lr=1.37e-04
+Epoch: [67] Target: [7] train MAE: 6.01000, val MAE: 6.34169, test MAE: 5.93329, Time: 483.61s
+Best -- epoch=61, train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775
+
+Epoch: [67] Target: [7] EMA val MAE: 6.04340, EMA test MAE: 5.91312, Time: 511.76s
+Best EMA -- epoch=64, val MAE: 4.94951, test MAE: 5.78959
+
+Epoch: [67][0/1718] 	 loss: 0.48612, MAE: 3.41807, time/step=667ms, lr=1.30e-04
+Epoch: [67][100/1718] 	 loss: 0.77670, MAE: 6.41677, time/step=265ms, lr=1.30e-04
+Epoch: [67][200/1718] 	 loss: 0.80335, MAE: 6.68523, time/step=265ms, lr=1.30e-04
+Epoch: [67][300/1718] 	 loss: 0.78825, MAE: 6.52505, time/step=264ms, lr=1.30e-04
+Epoch: [67][400/1718] 	 loss: 0.77363, MAE: 6.37116, time/step=263ms, lr=1.30e-04
+Epoch: [67][500/1718] 	 loss: 0.75993, MAE: 6.22835, time/step=263ms, lr=1.30e-04
+Epoch: [67][600/1718] 	 loss: 0.75303, MAE: 6.15702, time/step=264ms, lr=1.30e-04
+Epoch: [67][700/1718] 	 loss: 0.73862, MAE: 6.00893, time/step=263ms, lr=1.30e-04
+Epoch: [67][800/1718] 	 loss: 0.74259, MAE: 6.05168, time/step=264ms, lr=1.30e-04
+Epoch: [67][900/1718] 	 loss: 0.74359, MAE: 6.06240, time/step=264ms, lr=1.30e-04
+Epoch: [67][1000/1718] 	 loss: 0.73698, MAE: 5.99476, time/step=264ms, lr=1.30e-04
+Epoch: [67][1100/1718] 	 loss: 0.73283, MAE: 5.95295, time/step=264ms, lr=1.30e-04
+Epoch: [67][1200/1718] 	 loss: 0.73683, MAE: 5.99496, time/step=264ms, lr=1.30e-04
+Epoch: [67][1300/1718] 	 loss: 0.73884, MAE: 6.01594, time/step=264ms, lr=1.30e-04
+Epoch: [67][1400/1718] 	 loss: 0.73932, MAE: 6.02066, time/step=264ms, lr=1.30e-04
+Epoch: [67][1500/1718] 	 loss: 0.73706, MAE: 5.99736, time/step=264ms, lr=1.30e-04
+Epoch: [67][1600/1718] 	 loss: 0.73252, MAE: 5.95109, time/step=264ms, lr=1.30e-04
+Epoch: [67][1700/1718] 	 loss: 0.72792, MAE: 5.90489, time/step=264ms, lr=1.30e-04
+Epoch: [67][1717/1718] 	 loss: 0.72697, MAE: 5.89538, time/step=264ms, lr=1.30e-04
+Epoch: [68] Target: [7] train MAE: 5.89538, val MAE: 5.85937, test MAE: 5.98302, Time: 481.40s
+Best -- epoch=61, train MAE: 5.91003, val MAE: 5.16038, test MAE: 6.49775
+
+Epoch: [68] Target: [7] EMA val MAE: 6.24775, EMA test MAE: 6.21986, Time: 509.50s
+Best EMA -- epoch=64, val MAE: 4.94951, test MAE: 5.78959
+
+Epoch: [68][0/1718] 	 loss: 0.78753, MAE: 6.55274, time/step=670ms, lr=1.24e-04
+Epoch: [68][100/1718] 	 loss: 0.68026, MAE: 5.44956, time/step=269ms, lr=1.24e-04
+Epoch: [68][200/1718] 	 loss: 0.70988, MAE: 5.75587, time/step=266ms, lr=1.24e-04
+Epoch: [68][300/1718] 	 loss: 0.72742, MAE: 5.93569, time/step=264ms, lr=1.24e-04
+Epoch: [68][400/1718] 	 loss: 0.73186, MAE: 5.97937, time/step=265ms, lr=1.24e-04
+Epoch: [68][500/1718] 	 loss: 0.73178, MAE: 5.97696, time/step=265ms, lr=1.24e-04
+Epoch: [68][600/1718] 	 loss: 0.72468, MAE: 5.90310, time/step=266ms, lr=1.24e-04
+Epoch: [68][700/1718] 	 loss: 0.72426, MAE: 5.89925, time/step=266ms, lr=1.24e-04
+Epoch: [68][800/1718] 	 loss: 0.72303, MAE: 5.88690, time/step=266ms, lr=1.24e-04
+Epoch: [68][900/1718] 	 loss: 0.73329, MAE: 5.99251, time/step=266ms, lr=1.24e-04
+Epoch: [68][1000/1718] 	 loss: 0.73688, MAE: 6.02799, time/step=265ms, lr=1.24e-04

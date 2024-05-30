@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Node resource configurations
+# https://support.vectorinstitute.ai/Vaughan_slurm_changes
+#SBATCH --job-name=Equibayesian
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=4
+# a40, 48GB, gpu[001-015], gpu[027-056]
+# rtx6000, 24GB
+#SBATCH --partition=rtx6000
+#SBATCH --gres=gpu:1
+# sacctmgr list qos format=Name%15,Priority,MaxWall,MaxTRESPerUser normal,m,m2,m3,m4,m5,long
+#SBATCH --qos=normal
+#SBATCH --time=16:00:00
+#SBATCH --output=results/Slurm/slurm-%j.out
+
+# Append is important because otherwise preemption resets the file
+#SBATCH --open-mode=append
+
+echo `date`: Job $SLURM_JOB_ID is allocated resources.
+
+# the recommendation is to keep erything that defines the workload itself in a separate script
+echo "Inside slurm_launcher.slrm ($0). received arguments: $@"
+
+HOME_DIR=/h/aguzmanc
+SCRIPTDIR=${HOME_DIR}/equiformer_v2
+
+# this will run the script
+export WANDB_API_KEY=3d11f6c087dc5aa70c98c9032ef4431796f05e02
+${HOME_DIR}/miniforge3/envs/equiformer/bin/python ${SCRIPTDIR}/"$@"
+
+# use as
+# sbatch slurm_launcher.slrm my_script.py --arg1 1
