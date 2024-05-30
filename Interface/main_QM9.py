@@ -1,32 +1,32 @@
-import utils as utils
-import argparse
-import wandb
-import time
-import torch
-import numpy as np
-from torch_geometric.loader import DataLoader
 import os
-from Pipeline.logger import FileLogger
-from pathlib import Path
+import time
+import wandb
+import torch
+import argparse
+import numpy as np
 
-from Pipeline.parser import get_args_parser
+from pathlib import Path
+from contextlib import suppress
+from torch_geometric.loader import DataLoader
 
 from laplace import Laplace
 from laplace.curvature import CurvlinopsEF
-from datasets.QM9 import QM9
 
-# AMP
-from contextlib import suppress
-from timm.utils import NativeScaler
-
-import nets
+from timm.utils import ModelEmaV2, NativeScaler
+from timm.scheduler import create_scheduler
 from ocpmodels.common.registry import registry
 
-from timm.utils import ModelEmaV2
-from timm.scheduler import create_scheduler
-from Pipeline.optim_factory import create_optimizer
-
-from Pipeline.engine import train_one_epoch, evaluate, compute_stats
+import nets
+from .parser import get_args_parser
+from Pipeline import (
+    train_one_epoch, 
+    evaluate, 
+    compute_stats, 
+    create_optimizer,
+    FileLogger, 
+    calibration_plot
+    )
+from datasets.QM9 import QM9
 
 
 ModelEma = ModelEmaV2
@@ -319,7 +319,7 @@ def main(args):
                 _log.info(f"Batch {i} done. Time taken: {time.perf_counter() - batch_start_time:.2f}")
 
     _log.info(f"Preparing calibration plot.")
-    utils.calibration_plot(predictions=pred, observations=y, num_bins=20, wandb=run, logger=_log)
+    calibration_plot(predictions=pred, observations=y, num_bins=20, wandb=run, logger=_log)
 
         
 
