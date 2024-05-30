@@ -4,10 +4,9 @@
 
 Things left to do:
   - Code Bayesian Optimisation loop
-  - Add sub-sampler for the virtual library 
   - Acquisition function 
   - Monte Carlo Sampler for the acquisition function
-  - Distribution-level calibration "Distribution Calibration for Regression" by Son, Diethe, Kull & Flach (2019)
+  - Review "Distribution Calibration for Regression" by Son, Diethe, Kull & Flach (2019)
   - Read about Bayesian coresets ("Bayesian coresets" by Zhang, Khanna, Kyrillidis & Koyejo, 2021)
 
 Follow up ideas:
