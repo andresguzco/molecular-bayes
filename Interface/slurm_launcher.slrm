@@ -27,7 +27,7 @@ SCRIPTDIR=${HOME_DIR}/3D_Bayes
 
 # this will run the script
 export WANDB_API_KEY=3d11f6c087dc5aa70c98c9032ef4431796f05e02
-${HOME_DIR}/miniforge3/envs/equiformer/bin/python ${SCRIPTDIR}/"$@"
+${HOME_DIR}/miniforge3/envs/equibayes/bin/python ${SCRIPTDIR}/"$@"
 
 # use as
 # sbatch slurm_launcher.slrm my_script.py --arg1 1

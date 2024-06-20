@@ -1,0 +1,1331 @@
+Thu Jun 20 11:33:09 EDT 2024: Job 12810518 is allocated resources.
+Inside slurm_launcher.slrm (/var/spool/slurmd/job12810518/slurm_script). received arguments: GP.py --output-dir results/models/GP --model-name GP_Exact --model-type GP --data-path datasets/qm9 --iterations 100
+Namespace(output_dir='results/models/GP', model_name='GP_Exact', model_type='GP', input_irreps=None, radius=2.0, num_basis=32, output_channels=1, epochs=300, iterations=100, batch_size=64, model_ema=True, model_ema_decay=0.9999, model_ema_force_cpu=False, drop_path_rate=0.0, opt='adamw', opt_eps=1e-08, opt_betas=None, clip_grad=None, momentum=0.9, weight_decay=0.01, sched='cosine', lr=0.0005, lr_noise=None, lr_noise_pct=0.67, lr_noise_std=1.0, warmup_lr=1e-06, min_lr=1e-05, decay_epochs=30, warmup_epochs=5, cooldown_epochs=10, patience_epochs=10, decay_rate=0.1, print_freq=100, target=4, data_path='datasets/qm9', feature_type='one_hot', compute_stats=False, standardize=True, loss='l1', seed=0, workers=4, pin_mem=True, amp=False, prototyping=True)
+wandb: Currently logged in as: andresguzco. Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.17.2 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.0
+wandb: Run data is saved locally in /fs01/home/aguzmanc/3D_Bayes/wandb/run-20240620_113318-owznnoxk
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run GP
+wandb: ⭐️ View project at https://wandb.ai/andresguzco/3D_Bayes
+wandb: 🚀 View run at https://wandb.ai/andresguzco/3D_Bayes/runs/owznnoxk
+Training set mean: 8.429864883422852, std:1.8833926916122437
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+ExactGPModel(
+  (likelihood): GaussianLikelihood(
+    (noise_covar): HomoskedasticNoise(
+      (raw_noise_constraint): GreaterThan(1.000E-04)
+    )
+  )
+  (mean_module): ConstantMean()
+  (covar_module): ScaleKernel(
+    (base_kernel): MaternKernel(
+      (raw_lengthscale_constraint): Positive()
+    )
+    (raw_outputscale_constraint): Positive()
+  )
+)
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 0. Next query: 4528. Selection: 7.99.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 1. Next query: 344. Selection: 8.99.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 2. Next query: 9280. Selection: 8.69.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 3. Next query: 8259. Selection: 8.41.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 4. Next query: 7071. Selection: 9.31.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 5. Next query: 9515. Selection: 8.39.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 6. Next query: 3520. Selection: 7.66.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 7. Next query: 565. Selection: 9.23.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 8. Next query: 7432. Selection: 7.43.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 9. Next query: 8794. Selection: 8.83.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 10. Next query: 9381. Selection: 8.83.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 11. Next query: 4686. Selection: 8.50.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 12. Next query: 510. Selection: 7.33.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 13. Next query: 7789. Selection: 7.77.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 14. Next query: 6845. Selection: 8.89.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 15. Next query: 3603. Selection: 8.59.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 16. Next query: 8475. Selection: 8.38.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 17. Next query: 4874. Selection: 7.17.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 18. Next query: 8478. Selection: 8.32.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 19. Next query: 5251. Selection: 9.06.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 20. Next query: 3411. Selection: 8.38.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 21. Next query: 5952. Selection: 5.93.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 22. Next query: 3931. Selection: 8.85.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 23. Next query: 7512. Selection: 8.76.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 24. Next query: 9434. Selection: 8.88.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 25. Next query: 7763. Selection: 8.55.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 26. Next query: 8029. Selection: 8.75.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 27. Next query: 7562. Selection: 9.02.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 28. Next query: 5408. Selection: 8.14.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 29. Next query: 1116. Selection: 8.51.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 30. Next query: 7975. Selection: 8.48.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 31. Next query: 8734. Selection: 8.49.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 32. Next query: 8388. Selection: 8.41.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 33. Next query: 5742. Selection: 8.59.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 34. Next query: 7407. Selection: 8.77.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 35. Next query: 346. Selection: 8.14.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 36. Next query: 2225. Selection: 7.90.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 37. Next query: 7356. Selection: 7.43.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 38. Next query: 2685. Selection: 8.57.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 39. Next query: 9146. Selection: 9.03.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 40. Next query: 6189. Selection: 8.92.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 41. Next query: 2586. Selection: 8.44.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 42. Next query: 3109. Selection: 9.05.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 43. Next query: 3835. Selection: 8.80.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 44. Next query: 8093. Selection: 8.96.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 45. Next query: 3730. Selection: 8.39.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 46. Next query: 4479. Selection: 8.77.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 47. Next query: 2010. Selection: 8.19.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 48. Next query: 7910. Selection: 8.05.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 49. Next query: 3779. Selection: 9.09.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 50. Next query: 1307. Selection: 8.95.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 51. Next query: 4663. Selection: 8.94.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 52. Next query: 7862. Selection: 8.14.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 53. Next query: 7379. Selection: 8.04.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 54. Next query: 8225. Selection: 9.63.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 55. Next query: 7424. Selection: 7.40.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 56. Next query: 1296. Selection: 8.95.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 57. Next query: 8410. Selection: 8.08.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 58. Next query: 5238. Selection: 6.99.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 59. Next query: 8600. Selection: 8.76.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 60. Next query: 2874. Selection: 8.57.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 61. Next query: 1844. Selection: 9.47.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 62. Next query: 5064. Selection: 7.94.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 63. Next query: 831. Selection: 9.22.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 64. Next query: 4603. Selection: 8.81.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 65. Next query: 7547. Selection: 7.11.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 66. Next query: 9773. Selection: 9.01.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 67. Next query: 8848. Selection: 8.87.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 68. Next query: 8750. Selection: 6.54.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 69. Next query: 3328. Selection: 8.76.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 70. Next query: 3688. Selection: 8.22.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 71. Next query: 5361. Selection: 8.57.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 72. Next query: 1619. Selection: 8.14.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 73. Next query: 1041. Selection: 8.39.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 74. Next query: 5842. Selection: 8.64.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 75. Next query: 846. Selection: 8.39.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 76. Next query: 7005. Selection: 7.45.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 77. Next query: 1055. Selection: 8.25.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 78. Next query: 6541. Selection: 9.27.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 79. Next query: 234. Selection: 8.40.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 80. Next query: 9657. Selection: 8.58.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 81. Next query: 8698. Selection: 9.13.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 82. Next query: 9002. Selection: 8.51.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 83. Next query: 8649. Selection: 8.89.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 84. Next query: 1747. Selection: 8.06.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 85. Next query: 7498. Selection: 8.24.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 86. Next query: 7416. Selection: 8.91.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 87. Next query: 1593. Selection: 8.09.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 88. Next query: 6477. Selection: 7.48.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 89. Next query: 5068. Selection: 8.84.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 90. Next query: 2662. Selection: 8.82.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 91. Next query: 7602. Selection: 9.12.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 92. Next query: 9845. Selection: 7.92.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 93. Next query: 2962. Selection: 9.04.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 94. Next query: 1338. Selection: 9.27.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 95. Next query: 1976. Selection: 8.45.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 96. Next query: 1127. Selection: 6.48.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 97. Next query: 6869. Selection: 7.92.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 98. Next query: 5816. Selection: 8.46.
+
+
+Evaluating model.
+
+Preparing calibration plot.
+
+Training complete.
+
+Incumbent: [10.23].
+
+Querying Complete.
+
+Iter: 99. Next query: 8176. Selection: 7.43.
+
+wandb: - 3.262 MB of 3.286 MB uploadedwandb: 🚀 View run GP at: https://wandb.ai/andresguzco/3D_Bayes/runs/owznnoxk
+wandb: ⭐️ View project at: https://wandb.ai/andresguzco/3D_Bayes
+wandb: Synced 6 W&B file(s), 101 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20240620_113318-owznnoxk/logs

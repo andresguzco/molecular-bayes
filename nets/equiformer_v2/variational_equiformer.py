@@ -1,3 +1,4 @@
+import gc
 import math
 import numpy as np
 import torch
@@ -34,7 +35,6 @@ from .layer_norm import (
     get_normalization_layer
 )
 from .transformer_block import (
-    SO2EquivariantGraphAttention,
     FeedForwardNetwork,
     TransBlockV2, 
 )
@@ -53,7 +53,6 @@ class VariationalEquiformer(BaseModel):
 
     Args:
         use_pbc (bool):         Use periodic boundary conditions
-        regress_forces (bool):  Compute forces
         otf_graph (bool):       Compute graph On The Fly (OTF)
         max_neighbors (int):    Maximum number of neighbors per atom
         max_radius (float):     Maximum distance between nieghboring atoms in Angstroms
@@ -100,25 +99,24 @@ class VariationalEquiformer(BaseModel):
         bond_feat_dim,  # not used
         num_targets,    # not used
         use_pbc=False,
-        regress_forces=False,
         otf_graph=True,
         max_neighbors=500,
         max_radius=5.0,
         max_num_elements=90,
 
         ### Current numbers are reduced for speed and testing
-        num_layers=1,             # Originally 8
+        num_layers=2,             # Originally 8
         sphere_channels=128,       # Originally 128
         attn_hidden_channels=128,  # Originally 128
         num_heads=8,              # Originally 8
         attn_alpha_channels=32,    # Originally 32
         attn_value_channels=16,    # Originally 16
-        ffn_hidden_channels=16,   # Originally 512
+        ffn_hidden_channels=32,   # Originally 512
         ###
         
         norm_type='rms_norm_sh',
         
-        lmax_list=[4],            # Originally 4
+        lmax_list=[3],            # Originally 4
         mmax_list=[2],
         grid_resolution=None, 
 
@@ -141,14 +139,14 @@ class VariationalEquiformer(BaseModel):
 
         alpha_drop=0.1,
         drop_path_rate=0.05, 
-        proj_drop=0.0, 
-
+        proj_drop=0.0,
         weight_init='normal'
     ):
         super().__init__()
 
+        self.regress_forces = False
+
         self.use_pbc = use_pbc
-        self.regress_forces = regress_forces
         self.otf_graph = otf_graph
         self.max_neighbors = max_neighbors
         self.max_radius = max_radius
@@ -199,7 +197,6 @@ class VariationalEquiformer(BaseModel):
 
         self.device = 'cpu' #torch.cuda.current_device()
 
-        self.grad_forces = False
         self.num_resolutions = len(self.lmax_list)
         self.sphere_channels_all = self.num_resolutions * self.sphere_channels
         
@@ -303,7 +300,7 @@ class VariationalEquiformer(BaseModel):
             self.blocks.append(block)
 
         
-        # Output blocks for energy and forces
+        # Output block for energy
         self.norm = get_normalization_layer(self.norm_type, lmax=max(self.lmax_list), num_channels=self.sphere_channels)
         self.energy_block = FeedForwardNetwork(
             self.sphere_channels,
@@ -318,30 +315,6 @@ class VariationalEquiformer(BaseModel):
             self.use_sep_s2_act,
             variational=True
         )
-        # if self.regress_forces:
-        #     self.force_block = SO2EquivariantGraphAttention(
-        #         self.sphere_channels,
-        #         self.attn_hidden_channels,
-        #         self.num_heads, 
-        #         self.attn_alpha_channels,
-        #         self.attn_value_channels, 
-        #         1,
-        #         self.lmax_list,
-        #         self.mmax_list,
-        #         self.SO3_rotation, 
-        #         self.mappingReduced, 
-        #         self.SO3_grid, 
-        #         self.max_num_elements,
-        #         self.edge_channels_list,
-        #         self.block_use_atom_edge_embedding, 
-        #         self.use_m_share_rad,
-        #         self.attn_activation, 
-        #         self.use_s2_act_attn, 
-        #         self.use_attn_renorm,
-        #         self.use_gate_act,
-        #         self.use_sep_s2_act,
-        #         alpha_drop=0.0
-        #     )
             
         self.apply(self._init_weights)
         self.apply(self._uniform_init_rad_func_linear_weights)
@@ -363,15 +336,14 @@ class VariationalEquiformer(BaseModel):
             data.cell = None
 
         num_atoms = len(atomic_numbers)
-        pos = data.pos
 
         (
             edge_index,
             edge_distance,
             edge_distance_vec,
-            cell_offsets,
+            _,
             _,  # cell offset distances
-            neighbors,
+            _,
         ) = self.generate_graph(data)
 
         ###############################################################
@@ -416,12 +388,12 @@ class VariationalEquiformer(BaseModel):
 
         # Edge encoding (distance and atom edge)
         edge_distance = self.distance_expansion(edge_distance)
-        # if self.share_atom_edge_embedding and self.use_atom_edge_embedding:
-        #     source_element = atomic_numbers[edge_index[0]]  # Source atom atomic number
-        #     target_element = atomic_numbers[edge_index[1]]  # Target atom atomic number
-        #     source_embedding = self.source_embedding(source_element)
-        #     target_embedding = self.target_embedding(target_element)
-        #     edge_distance = torch.cat((edge_distance, source_embedding, target_embedding), dim=1)
+        if self.share_atom_edge_embedding and self.use_atom_edge_embedding:
+            source_element = atomic_numbers[edge_index[0]]  # Source atom atomic number
+            target_element = atomic_numbers[edge_index[1]]  # Target atom atomic number
+            source_embedding = self.source_embedding(source_element)
+            target_embedding = self.target_embedding(target_element)
+            edge_distance = torch.cat((edge_distance, source_embedding, target_embedding), dim=1)
 
         # Edge-degree embedding
         edge_degree = self.edge_degree_embedding(
@@ -449,30 +421,25 @@ class VariationalEquiformer(BaseModel):
         ###############################################################
         # Energy estimation
         ###############################################################
-        node_energy = self.energy_block(x)
+        node_energy, node_energy_mean, node_energy_std = self.energy_block(x)
+
         node_energy = node_energy.embedding.narrow(1, 0, 1)
+        node_energy_mean = node_energy_mean.narrow(1, 0, 1)
+        node_energy_std = node_energy_std.narrow(1, 0, 1)
+
         energy = torch.zeros(len(data.natoms), device=node_energy.device, dtype=node_energy.dtype)
+        energy_mean = torch.zeros(len(data.natoms), device=node_energy_mean.device, dtype=node_energy_mean.dtype)
+        energy_std = torch.zeros(len(data.natoms), device=node_energy_std.device, dtype=node_energy_std.dtype)
+
         energy.index_add_(0, data.batch, node_energy.view(-1))
+        energy_mean.index_add_(0, data.batch, node_energy_mean.view(-1))
+        energy_std.index_add_(0, data.batch, node_energy_std.view(-1))
+
         energy = energy / _AVG_NUM_NODES
-        
-        return energy
+        energy_mean = energy_mean / _AVG_NUM_NODES
+        energy_std = energy_std / _AVG_NUM_NODES
 
-        ###############################################################
-        # Force estimation
-        ###############################################################
-        # if self.regress_forces:
-        #     forces = self.force_block(x,
-        #         atomic_numbers,
-        #         edge_distance,
-        #         edge_index)
-        #     forces = forces.embedding.narrow(1, 1, 3)
-        #     forces = forces.view(-1, 3)            
-            
-        # if not self.regress_forces:
-        #     return energy
-        # else:
-        #     return energy, forces
-
+        return energy, energy_mean, energy_std
 
     # Initialize the edge rotation matrics
     def _init_edge_rot_mat(self, data, edge_index, edge_distance_vec):

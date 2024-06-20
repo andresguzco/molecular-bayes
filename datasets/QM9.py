@@ -159,7 +159,7 @@ class QM9(InMemoryDataset):
             skip = [int(x.split()[0]) - 1 for x in f.read().split('\n')[9:-2]]
 
         suppl = Chem.SDMolSupplier(self.raw_paths[0], removeHs=False,
-                                   sanitize=False)
+                                   sanitize=True) # False
         data_list = []
 
         Nmols = len(suppl) - len(skip)
@@ -184,11 +184,16 @@ class QM9(InMemoryDataset):
         # Add a second index to align with cormorant splits.
         j = 0
         for i, mol in enumerate(tqdm(suppl)):
+
+            if mol is None:
+                continue
+
             if i in skip:
                 continue
             if j not in indices[self.split]:
                 j += 1
                 continue
+
             j += 1
 
             N = mol.GetNumAtoms()
@@ -263,6 +268,7 @@ class QM9(InMemoryDataset):
 
             y = target[i].unsqueeze(0)
             name = mol.GetProp('_Name')
+            # smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
             
             if self.update_atomrefs:
                 node_atom = z.new_tensor([-1, 0, -1, -1, -1, -1, 1, 2, 3, 4])[z]
@@ -272,7 +278,8 @@ class QM9(InMemoryDataset):
 
             data = Data(x=x, pos=pos, z=z, edge_index=edge_index, 
                 edge_attr=edge_attr, y=y, name=name, index=i, 
-                edge_d_index=edge_d_index, edge_d_attr=edge_d_attr, natoms=len(z))
+                edge_d_index=edge_d_index, edge_d_attr=edge_d_attr, natoms=len(z),
+                mol=mol)
             data_list.append(data)
             
         torch.save(self.collate(data_list), self.processed_paths[0])

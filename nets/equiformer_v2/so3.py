@@ -286,12 +286,14 @@ class SO3_Embedding():
 
     # Reshape the embedding l -> m
     def _m_primary(self, mapping):
-        self.embedding = torch.einsum("nac, ba -> nbc", self.embedding, mapping.to_m)
+        aux = torch.einsum("nac, ba -> nbc", self.embedding, mapping.to_m)
+        self.embedding = aux
 
 
     # Reshape the embedding m -> l
     def _l_primary(self, mapping):
-        self.embedding = torch.einsum("nac, ab -> nbc", self.embedding, mapping.to_m)
+        aux = torch.einsum("nac, ab -> nbc", self.embedding, mapping.to_m)
+        self.embedding = aux
 
 
     # Rotate the embedding
@@ -459,7 +461,7 @@ class SO3_Rotation(torch.nn.Module):
 
     # Compute Wigner matrices from rotation matrix
     def RotationToWignerDMatrix(self, edge_rot_mat, start_lmax, end_lmax):
-        x = edge_rot_mat @ edge_rot_mat.new_tensor([0.0, 1.0, 0.0])
+        x = edge_rot_mat @ torch.tensor([0.0, 1.0, 0.0], dtype=torch.float32, device=self.device)
         alpha, beta = o3.xyz_to_angles(x)
         R = (
             o3.angles_to_matrix(
@@ -701,26 +703,35 @@ class SO3_LinearVariational(torch.nn.Module):
 
     def forward(self, input_embedding):
         sample_weight = self.weight_mu + torch.exp(self.weight_log_sigma) * torch.randn_like(self.weight_log_sigma)
-        weight = torch.index_select(sample_weight, dim=0, index=self.expand_index) # [(L_max + 1) ** 2, C_out, C_in]
+        weight = torch.index_select(sample_weight, dim=0, index=self.expand_index) 
+        mean_weight = torch.index_select(self.weight_mu, dim=0, index=self.expand_index)
+        std_weight = torch.index_select(torch.exp(self.weight_log_sigma), dim=0, index=self.expand_index)
 
-        out = torch.einsum('bmi, moi -> bmo', input_embedding.embedding, weight) # [N, (L_max + 1) ** 2, C_out]
+        out_sample = torch.einsum('bmi, moi -> bmo', input_embedding.embedding, weight)
+        out_mean = torch.einsum('bmi, moi -> bmo', input_embedding.embedding, mean_weight)
+        out_std = torch.einsum('bmi, moi -> bmo', input_embedding.embedding.pow(2), std_weight.pow(2)).sqrt()
 
-        sample_bias = bias = self.bias_mu + torch.exp(self.bias_log_sigma) * torch.randn_like(self.bias_log_sigma)
+        sample_bias = self.bias_mu + torch.exp(self.bias_log_sigma) * torch.randn_like(self.bias_log_sigma)
         bias = sample_bias.view(1, 1, self.out_features)
-        
-        out[:, 0:1, :] = out.narrow(1, 0, 1) + bias
+        mean_bias = self.bias_mu.view(1, 1, self.out_features)
+        std_bias = torch.exp(self.bias_log_sigma).view(1, 1, self.out_features)
+
+        out_sample[:, 0:1, :] = out_sample.narrow(1, 0, 1) + bias
+        out_mean[:, 0:1, :] = out_mean.narrow(1, 0, 1) + mean_bias
+        out_std[:, 0:1, :] = (out_std.narrow(1, 0, 1).pow(2) + std_bias.pow(2)).sqrt()
 
         out_embedding = SO3_Embedding(
-            0, 
-            input_embedding.lmax_list.copy(), 
-            self.out_features, 
-            device=input_embedding.device, 
+            0,
+            input_embedding.lmax_list.copy(),
+            self.out_features,
+            device=input_embedding.device,
             dtype=input_embedding.dtype
         )
-        out_embedding.set_embedding(out)
+        out_embedding.set_embedding(out_sample)
         out_embedding.set_lmax_mmax(input_embedding.lmax_list.copy(), input_embedding.lmax_list.copy())
 
-        return out_embedding
+        return out_embedding, out_mean, out_std
+
         
 
     def __repr__(self):
