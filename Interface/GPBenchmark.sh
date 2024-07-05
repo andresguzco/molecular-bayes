@@ -6,4 +6,5 @@ sbatch Interface/slurm_launcher.slrm GP.py \
 	--model-name 'GP_Exact' \
 	--model-type 'GP' \
 	--data-path 'datasets/qm9' \
-	--iterations 100 \
+	--iterations 30 \
+	--seed 1234

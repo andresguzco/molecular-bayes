@@ -12,11 +12,17 @@ import numpy as np
 
 from pathlib import Path
 from botorch import fit_gpytorch_mll
-from Pipeline import FileLogger, BayesianOptimiser
+from timm.scheduler import create_scheduler
+from Interface.pars_args import get_args_parser
+from Pipeline import (
+    FileLogger, 
+    BayesianOptimiser,
+    calibration_plot,
+    create_optimizer
+)
+
 from rdkit.Chem import AllChem
 from datasets.QM9 import QM9
-from Pipeline.utils import calibration_plot, plotter
-from Interface.pars_args import get_args_parser
 from ocpmodels.common.registry import registry
 
 
@@ -42,7 +48,7 @@ def main(args):
     run = wandb.init(
     project="3D_Bayes",
     config=args,
-    name=args.model_type
+        name=f"{args.model_type}, Seed={args.seed}"
     )
     ############################    
 
@@ -57,23 +63,35 @@ def main(args):
     # Dataset 
     ############################
     general_dataset = QM9(args.data_path, 'train', feature_type=args.feature_type)
-    val_dataset     = QM9(args.data_path, 'valid', feature_type=args.feature_type)
+    test_dataset    = QM9(args.data_path, 'test', feature_type=args.feature_type)
     ############################
 
     ############################
     # Subsampling 
     ############################
-    train_idx = 49
-    stop_idx = train_idx + 100000
+    train_idx = 100
+    stop_idx = 1000
     indices = torch.randperm(len(general_dataset)).tolist()
 
-    proto_indices =  indices[:train_idx]
-    virtual_indices =  indices[train_idx:stop_idx]
+    train_indices =  indices[:train_idx]
+    virtual_indices =  indices[train_idx:train_idx + stop_idx]
 
     if args.prototyping:
-        virtual_library = general_dataset[virtual_indices]
-        train_dataset = general_dataset[proto_indices]
-        val_dataset = val_dataset[:99]
+        virtual_library = general_dataset[:len(train_indices)].copy()
+        virtual_library.data, virtual_library.slices = QM9.collate([general_dataset[i] for i in virtual_indices])
+
+        train_dataset = general_dataset[:len(virtual_indices)].copy()
+        train_dataset.data, train_dataset.slices = QM9.collate([general_dataset[i] for i in train_indices])
+    ############################
+
+    ############################
+    # Calculate stats
+    ############################
+    _log.info(f'Training set mean: {train_dataset.mean(args.target)}, std:{train_dataset.std(args.target)}')
+
+    if args.standardize:
+        task_mean, task_std = train_dataset.mean(args.target), train_dataset.std(args.target)
+    norm_factor = [task_mean, task_std]
     ############################
 
     ############################
@@ -81,8 +99,8 @@ def main(args):
     ############################
     fpgen = AllChem.GetMorganGenerator(radius=int(args.radius), fpSize=2048)
 
-    X_val = torch.tensor([fpgen.GetFingerprint(data.mol) for data in val_dataset])
-    Y_val = val_dataset.y[:, args.target]
+    X_val = torch.tensor([fpgen.GetFingerprint(data.mol) for data in test_dataset])
+    Y_val = test_dataset.y[:, args.target]
     X_train = torch.tensor([fpgen.GetFingerprint(data.mol) for data in train_dataset])
     Y_train = train_dataset.y[:, args.target]
     X_virtual = torch.tensor([fpgen.GetFingerprint(data.mol) for data in virtual_library])
@@ -104,19 +122,15 @@ def main(args):
     ############################
     # Network 
     ############################
-    create_model = registry.get_model_class("GP_Exact")
+    create_model = registry.get_model_class(args.model_name)
     ############################
 
     ############################
     # Bayesian Optimisation Loop
     ############################
-    virtual_max = virtual_library.data.y[:, args.target].max()
-    general_max = general_dataset.data.y[:, args.target].max()
-    train_max = train_dataset.data.y[:, args.target].max()
 
-    vSelection = torch.zeros(args.iterations)
-    vIncumbent = torch.zeros(args.iterations)
-    vIncumbent[0] = train_max
+    bayesOpt = BayesianOptimiser(model_type="GP", alpha="ES")
+    best_val = -np.inf
 
     for iter in range(args.iterations):
 
@@ -125,18 +139,12 @@ def main(args):
         ############################
         GP = GP_trainer(model_gen=create_model, X_train=X_train.float(), Y_train=Y_train.float(), 
                         X_test=X_val.float(), Y_test=Y_val.float(), device=device, logger=_log, 
-                        wandb=run)
+                        wandb=run, args=args, norm_factor=norm_factor)
 
         if iter == 0: 
             _log.info(GP)
-
         ###############################
-        # Step 2: Acquisition function 
-        ###############################
-        bayesOpt = BayesianOptimiser(model_type="GP")
-
-        ############################
-        # Step 3: Query 
+        # Step 2: Query 
         ############################
         idx_query = bayesOpt.query(
             model=GP,
@@ -147,14 +155,20 @@ def main(args):
             )
 
         _log.info(f"Iter: {iter}. Next query: {idx_query}. Selection: {Y_virtual[idx_query]:.2f}.\n")
-
+        _log.info(f"Virtual Library Size: {len(Y_virtual)}. Train Library Size: {len(Y_train)}.\n")
         ############################
-        # Step 4: Update 
+        # Step 3: Update 
         ############################
-        vSelection[iter] = virtual_library.data.y[idx_query, args.target]
-        if iter < args.iterations - 1:
-            vIncumbent[iter + 1] = vSelection[iter] if vSelection[iter] > vIncumbent[iter] else vIncumbent[iter]
+        if Y_virtual[idx_query] > best_val:
+            best_val = Y_virtual[idx_query]
 
+        run.log(data={"Selection": virtual_library.data.y[idx_query, args.target]})
+        run.log(data={"Best": best_val})
+
+        run.log(data={
+            "Virtual Max": Y_virtual.max(),
+            "Train Max": Y_train.max()
+        })
 
         X_train = torch.cat([X_train, X_virtual[idx_query].unsqueeze(0)])
         Y_train = torch.cat([Y_train, Y_virtual[idx_query].unsqueeze(0)])
@@ -164,40 +178,53 @@ def main(args):
         del GP
         torch.cuda.empty_cache()
         gc.collect()
-    
-    plotter(vIncumbent, vSelection, train_max, virtual_max, general_max, wandb=run)
 
     ############################
     # End of loop
     ############################
 
 
-def GP_trainer(model_gen, X_train, Y_train, X_test, Y_test, device, logger, wandb):
+def GP_trainer(model_gen, X_train, Y_train, X_test, Y_test, device, logger, wandb, args, norm_factor):
 
     likelihood = gpytorch.likelihoods.GaussianLikelihood()
     model = model_gen(X_train, Y_train, likelihood)
     model = model.to(device)
-    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-    fit_gpytorch_mll(mll)
 
+    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+        
+    mll.train()
+    model.train()
+    likelihood.train()
+    
+    botorch.fit_gpytorch_mll(mll)
+    
+    mll.eval()
     model.eval()
     likelihood.eval()
                                                              
     logger.info(f"\nEvaluating model.\n")                                                                                                                                
-                                                                                                    
-    with torch.no_grad():                                                                                                                                    
+                        
+    with torch.no_grad(): 
+        pred = model(X_test.to(device))  
+        pred_mu = pred.mean.detach()
+        pred_sigma = torch.sqrt(pred.variance.detach())
+ 
+    logger.info(f"Preparing calibration plot.\n") 
 
-        data = X_test.to(device)          
-        pred = model(data)  
-        pred_mu = pred.mean                                               
-    
-    logger.info(f"Preparing calibration plot.\n")  
     calibration_plot(
         pred_mu=pred_mu.cpu(), 
+        pred_sigma=pred_sigma.cpu(),
         obs=Y_test, 
         wandb=wandb,
         logger=logger
-        )
+    )
+
+    logger.info(f"Mean: {pred_mu}")
+    logger.info(f"Sigma: {pred_sigma}")
+
+    del pred_mu, pred_sigma, mll, likelihood
+    torch.cuda.empty_cache()
+    gc.collect()
 
     logger.info(f"Training complete.\n")   
     return model
@@ -207,9 +234,8 @@ def GP_trainer(model_gen, X_train, Y_train, X_test, Y_test, device, logger, wand
 ############################
 
 if __name__ == "__main__":
-    with botorch.settings.debug(state=True):
-        parser = argparse.ArgumentParser('Training equivariant networks',
-                                        parents=[get_args_parser()])
+    with botorch.settings.debug(True):
+        parser = argparse.ArgumentParser('Training equivariant networks', parents=[get_args_parser()])
         args = parser.parse_args()  
         if args.output_dir:
             Path(args.output_dir).mkdir(parents=True, exist_ok=True)

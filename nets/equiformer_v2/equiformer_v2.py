@@ -2,14 +2,11 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
-from pyexpat.model import XML_CQUANT_OPT
 
 from ocpmodels.models.base import BaseModel
 from ocpmodels.common.utils import conditional_grad
 from ocpmodels.common.registry import registry
 from ocpmodels.models.scn.smearing import GaussianSmearing
-
-from laplace import Laplace
 
 try:
     from e3nn import o3
@@ -23,8 +20,7 @@ from .so3 import (
     SO3_Embedding,
     SO3_Grid,
     SO3_Rotation,
-    SO3_LinearV2, 
-    SO3_LinearVariational
+    SO3_LinearV2
 )
 from .module_list import ModuleListInfo
 from .radial_function import RadialFunction
@@ -110,22 +106,22 @@ class EquiformerV2(BaseModel):
         num_layers=2,             # Originally 8
         sphere_channels=128,       # Originally 128
         attn_hidden_channels=128,  # Originally 128
-        num_heads=8,              # Originally 8
+        num_heads=4,              # Originally 8
         attn_alpha_channels=32,    # Originally 32
         attn_value_channels=16,    # Originally 16
-        ffn_hidden_channels=32,   # Originally 512
+        ffn_hidden_channels=512,   # Originally 512
         ###
         
         norm_type='rms_norm_sh',
         
-        lmax_list=[3],            # Originally 4
-        mmax_list=[2],
+        lmax_list=[4],            # Originally 4
+        mmax_list=[4],
         grid_resolution=None, 
 
         num_sphere_samples=164,    # Originally 164
 
         edge_channels=64,         # Originally 64
-        use_atom_edge_embedding=True, 
+        use_atom_edge_embedding=True,
         share_atom_edge_embedding=False,
         use_m_share_rad=False,
         distance_function="gaussian",
@@ -162,7 +158,8 @@ class EquiformerV2(BaseModel):
         self.num_heads = num_heads
         self.attn_alpha_channels = attn_alpha_channels
         self.attn_value_channels = attn_value_channels
-        self.ffn_hidden_channels = ffn_hidden_channels
+        # self.ffn_hidden_channels = ffn_hidden_channels
+        self.ffn_hidden_channels = 1024 if lmax_list[0] == 1 else 690 if lmax_list[0] == 2 else 512 if lmax_list[0] == 3 else 415
         self.norm_type = norm_type
         
         self.lmax_list = lmax_list
@@ -319,6 +316,20 @@ class EquiformerV2(BaseModel):
             self.use_grid_mlp,
             self.use_sep_s2_act
         )
+
+        # # Noisy Node Decoder
+        # self.noisy_node_decoder = FeedForwardNetwork(
+        #     self.sphere_channels,
+        #     self.ffn_hidden_channels,
+        #     1, 
+        #     self.lmax_list,
+        #     self.mmax_list,
+        #     self.SO3_grid,
+        #     self.ffn_activation,
+        #     self.use_gate_act,
+        #     self.use_grid_mlp,
+        #     self.use_sep_s2_act
+        # )
             
         self.apply(self._init_weights)
         self.apply(self._uniform_init_rad_func_linear_weights)
@@ -361,7 +372,7 @@ class EquiformerV2(BaseModel):
 
         ###############################################################
         # Initialize data structures
-        ###############################################################
+        ############################################################### 
 
         # Compute 3x3 rotation matrix per edge
         edge_rot_mat = self._init_edge_rot_mat(

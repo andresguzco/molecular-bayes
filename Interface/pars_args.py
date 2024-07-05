@@ -7,9 +7,10 @@ def get_args_parser():
     parser.add_argument('--model-name', type=str, default='equiformer_v2')
     parser.add_argument('--model-type', type=str, default='Base')
     parser.add_argument('--input-irreps', type=str, default=None)
-    parser.add_argument('--radius', type=float, default=2.0)
+    parser.add_argument('--radius', type=float, default=5.0)
     parser.add_argument('--num-basis', type=int, default=32)
     parser.add_argument('--output-channels', type=int, default=1)
+    parser.add_argument('--lmax', type=int, default=4)
     # training hyperparameters
     parser.add_argument("--epochs", type=int, default=300)
     parser.add_argument("--iterations", type=int, default=1)
@@ -20,7 +21,8 @@ def get_args_parser():
     parser.add_argument('--model-ema-decay', type=float, default=0.9999, help='')
     parser.add_argument('--model-ema-force-cpu', action='store_true', default=False, help='')
     # regularization
-    parser.add_argument('--drop-path_rate', type=float, default=0.0)
+    parser.add_argument('--drop-path_rate', type=float, default=0.1)
+    parser.add_argument('--patience', type=int, default=50)
     # optimizer (timm)
     parser.add_argument('--opt', default='adamw', type=str, metavar='OPTIMIZER',
                         help='Optimizer (default: "adamw"')
@@ -84,6 +86,11 @@ def get_args_parser():
     parser.add_argument('--no-amp', action='store_false', dest='amp', 
                         help='Disable FP16 training.')
     parser.set_defaults(amp=False)
-    # Prototypeing
+    # Prototyping
     parser.add_argument('--prototyping', type=bool, default=True)
+    # Noisy Node Parameters 
+    parser.add_argument('--noise-sigma', type=float, default=0.02)
+    parser.add_argument('--denoising-coef', type=float, default=0.1)
+    parser.add_argument('--denoising-prob', type=float, default=0.5)
+    parser.add_argument('--corrupt-ratio', type=float, default=0.125)
     return parser

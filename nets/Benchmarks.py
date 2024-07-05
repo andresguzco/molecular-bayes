@@ -25,6 +25,18 @@ class ExactGPModel(gpytorch.models.ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+@registry.register_model("GP_Approximate")
+class ApproxGPModel(gpytorch.models.ApproximateGP):
+    def __init__(variational_strategy):
+        super().__init__(variational_strategy)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.MaternKernel())
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
     
 
 @registry.register_model("GP_ExactMordred")
@@ -37,21 +49,24 @@ class ExactMordredGPModel(gpytorch.models.ExactGP):
     def forward(self, x):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
+        covar += torch.eye(x.size(0)) * 1e-3
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
 @registry.register_model("MPNN_Benchmark")
 class Benchmark2D(torch.nn.Module):
-    def __init__(self, node_attributes: int = 5, edge_attributes: int = 4, ffn_hidden: int = 32):
+    def __init__(self, node_attributes: int = 5, edge_attributes: int = 4, ffn_hidden: int = 350):
         super().__init__()
         self.encoder_layer = GNNEncoder(node_attributes, edge_attributes)
-        self.second_last = torch.nn.ReLU(torch.nn.Linear(edge_attributes, ffn_hidden))
-        self.last_layer = torch.nn.ReLU(torch.nn.Linear(ffn_hidden, 1))
+        self.last_layer = torch.nn.Sequential(
+            torch.nn.Linear(edge_attributes, ffn_hidden),
+            torch.nn.ReLU(),
+            torch.nn.Linear(ffn_hidden, 1)
+        )
 
     def forward(self, data):
         h = self.encoder_layer(data)
-        h = self.last_layer(h)
-        return h
+        return self.last_layer(h)
 
 
 class MolEncoder(metaclass=ABCMeta):
@@ -74,7 +89,7 @@ class MolEncoder(metaclass=ABCMeta):
         if not isinstance(device, torch.device):
             raise TypeError("Device must be a torch.device object")
         self._device = device
-
+    
     def to(self, device: Union[str, torch.device]) -> MolEncoder:
         if isinstance(device, str):
             device = torch.device(device)
@@ -116,7 +131,7 @@ class LearnableMolEncoder(MolEncoder, torch.nn.Module, metaclass=ABCMeta):
         if not isinstance(device, torch.device):
             raise TypeError("Device must be a torch.device object")
         self._device = device
-        nn.Module.to(self, device)
+        torch.nn.Module.to(self, device)
 
 
 class GNNEncoder(LearnableMolEncoder):
@@ -124,12 +139,11 @@ class GNNEncoder(LearnableMolEncoder):
             self,
             node_attributes: int = 5,
             edge_attributes: int = 4,
-            hidden_size: int = 32,
+            hidden_size: int = 512,
             num_layers: int = 2,
-            latent_dim: int = 1,
+            latent_dim: int = 4,
             variational: bool = False,
             pooling_type = global_mean_pool,
-            # activation_function: Type[torch.nn.Module] = torch.nn.ReLU,
             learning_rate: float = 1e-3,
             **kwargs
     ):
@@ -143,16 +157,16 @@ class GNNEncoder(LearnableMolEncoder):
         self._hidden_size = hidden_size
         self._input_layer = torch.nn.Linear(node_attributes, hidden_size)
         self._message_passing = self._initialize_message_passing(num_layers)
-
-        # self._activation = activation_function()
         self._pooling = pooling_type
         self._latent_dim = latent_dim
         self._mu = torch.nn.Linear(hidden_size, latent_dim)
         self.variational = variational
+
         if variational:
             self._log_var = torch.nn.Linear(hidden_size, latent_dim)
 
         self.learning_rate = learning_rate
+
         for kwarg, val in kwargs.items():
             setattr(self, kwarg, val)
 
@@ -161,7 +175,6 @@ class GNNEncoder(LearnableMolEncoder):
 
         for layer in self._message_passing:
             h = h + layer(h, x.edge_index, x.edge_attr)
-            # h = self._activation(h)  # TODO: Standardize and complete the code here
 
         return self._pooling(h, x.batch)
 

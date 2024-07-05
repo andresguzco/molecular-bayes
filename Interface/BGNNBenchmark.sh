@@ -6,5 +6,6 @@ sbatch Interface/slurm_launcher.slrm main.py \
 	--model-name 'MPNN_Benchmark' \
 	--data-path 'datasets/qm9' \
 	--model-type 'BGNN' \
-	--epochs 2 \
-	--iterations 10 \
+	--epochs 200 \
+	--iterations 30 \
+	--seed 1234

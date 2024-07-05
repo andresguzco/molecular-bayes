@@ -17,7 +17,7 @@
 # Append is important because otherwise preemption resets the file
 #SBATCH --open-mode=append
 
-echo `date`: Job $SLURM_JOB_ID is allocated resources.
+echo $(date): Job $SLURM_JOB_ID is allocated resources.
 
 # the recommendation is to keep erything that defines the workload itself in a separate script
 echo "Inside slurm_launcher.slrm ($0). received arguments: $@"

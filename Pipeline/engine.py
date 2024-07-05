@@ -12,6 +12,10 @@ from .utils import calibration_plot
 from laplace import Laplace
 from laplace.curvature import CurvlinopsEF
 from torch_geometric.loader import DataLoader
+from sklearn.model_selection import KFold
+from datasets.QM9 import QM9
+from timm.scheduler import create_scheduler
+from .optim_factory import create_optimizer
 
 
 ModelEma = ModelEmaV2
@@ -42,13 +46,11 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     target: int,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, 
-                    model_ema: Optional[ModelEma] = None,  
                     amp_autocast=None,
                     loss_scaler=None,
                     clip_grad=None,
                     print_freq: int = 100, 
                     logger=None,
-                    wandb=None,
                     model_type=False
                     ):
 
@@ -57,6 +59,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     
     loss_metric = AverageMeter()
     mae_metric = AverageMeter()
+    KL_metric = AverageMeter()
     
     start_time = time.perf_counter()
     
@@ -74,10 +77,13 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             pred = pred.squeeze()
 
             loss = criterion(pred, (data.y[:, target] - task_mean) / task_std)
-
-            if model_type == "Variational":
-                KL = BKLLoss(model)
-                loss += KL.item()
+        
+        N = len(pred) if pred.dim() != 0 else 1
+            
+        if model_type == "Variational":
+            KL = BKLLoss(model)
+            KL_metric.update(KL.item(), n=N)
+            loss += KL.item()
 
         optimizer.zero_grad()
         if loss_scaler is not None:
@@ -89,36 +95,24 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     value=clip_grad, mode='norm')
             optimizer.step()
         
-        loss_metric.update(loss.item(), n=pred.shape[0])
+        loss_metric.update(loss.item(), n=N)
         err = pred.detach() * task_std + task_mean - data.y[:, target]
-        mae_metric.update(torch.mean(torch.abs(err)).item(), n=pred.shape[0])
-        
-        if model_ema is not None:
-            model_ema.update(model)
+        mae_metric.update(torch.mean(torch.abs(err)).item(), n=N)
         
         # logging
         if step % print_freq == 0 or step == len(data_loader) - 1: 
             w = time.perf_counter() - start_time
             e = (step + 1) / len(data_loader)
-            info_str = 'Epoch: [{epoch}][{step}/{length}] \t loss: {loss:.5f}, MAE: {mae:.5f}, time/step={time_per_step:.0f}ms, '.format( 
-                epoch=epoch, step=step, length=len(data_loader), 
-                mae=mae_metric.avg, 
-                loss=loss_metric.avg,
-                time_per_step=(1e3 * w / e / len(data_loader))
-                )
-            info_str += 'lr={:.2e}'.format(optimizer.param_groups[0]["lr"])
+            info_str = f'Epoch: [{epoch}][{step}/{len(data_loader)}] \t loss: {loss_metric.avg:.5f}, '
+            info_str += f'MAE: {mae_metric.avg:.5f}, time/step={(1e3 * w / e / len(data_loader)):.0f}ms, '
+            info_str += f'lr={optimizer.param_groups[0]["lr"]:.2e}'
             logger.info(info_str)
-            wandb.log({
-            "Loss": loss.item() - KL if model_type == 'Variational' else loss.item(), 
-            "MAE": torch.mean(torch.abs(err)).item(),
-            "KL": KL if model_type == 'Variational' else None
-            })
-
+         
         del pred, loss, err, data
         torch.cuda.empty_cache()
-        gc.collect() 
+        gc.collect()
         
-    return mae_metric.avg
+    return mae_metric.avg, loss_metric.avg
 
 
 
@@ -148,11 +142,13 @@ def evaluate(model, norm_factor, target, data_loader, device, amp_autocast=None,
 
                 pred = pred.squeeze().detach()
             
+            N = len(pred) if pred.dim() != 0 else 1
+
             loss = criterion(pred, (data.y[:, target] - task_mean) / task_std)
             err = pred.detach() * task_std + task_mean - data.y[:, target]
             
-            loss_metric.update(loss.item(), n=pred.shape[0])
-            mae_metric.update(torch.mean(torch.abs(err)).item(), n=pred.shape[0])
+            loss_metric.update(loss.item(), n=N)
+            mae_metric.update(torch.mean(torch.abs(err)).item(), n=N)
         
             del pred, loss, err, data
             torch.cuda.empty_cache()
@@ -179,8 +175,7 @@ def compute_stats(data_loader, max_radius, logger, print_freq=1000):
         
         pos = data.pos
         batch = data.batch
-        edge_src, _ = radius_graph(pos, r=max_radius, batch=batch,
-            max_num_neighbors=1000)
+        edge_src, _ = radius_graph(pos, r=max_radius, batch=batch, max_num_neighbors=1000)
         batch_size = float(batch.max() + 1)
         num_nodes = pos.shape[0]
         num_edges = edge_src.shape[0]
@@ -216,6 +211,7 @@ def BKLLoss(model) :
     bias_mu = m.bias_mu.detach().to(device)
     prior_mu = m.prior_mu.detach().to(device)
     weight_mu = m.weight_mu.detach().to(device)
+
     bias_log_sigma = m.bias_log_sigma.detach().to(device)
     prior_log_sigma = m.prior_log_sigma.detach().to(device)
     weight_log_sigma = m.weight_log_sigma.detach().to(device)
@@ -226,12 +222,10 @@ def BKLLoss(model) :
 
 
 
-def train_laplace(model, train_loader, val_loader, criterion, target, logger, model_type, epochs=10):
+def train_laplace(model, train_loader, criterion, target, logger, model_type, epochs=10):
 
     if model_type == "Laplace":                            
-        last_layer_params = sum(p.numel() for p in model.energy_block.so3_linear_2.parameters())      
-        logger.info(f'Laplace Layer Parameters: {last_layer_params}')                                    
-                                                                                                    
+                                                                                                        
         for parameter in model.sphere_embedding.parameters():                                         
             parameter.requires_grad = False                                                           
                                                                                                     
@@ -253,9 +247,10 @@ def train_laplace(model, train_loader, val_loader, criterion, target, logger, mo
 
     elif model_type == "BGNN":
         for parameter in model.encoder_layer.parameters():
-            parameter.requires_grad = False     
-        for parameter in model.second_last.parameters():
-            parameter.requires_grad = False                                                              
+            parameter.requires_grad = False                  
+
+    last_layer_params = sum([p.numel() for p in model.parameters() if p.requires_grad])      
+    logger.info(f'Laplace Layer Parameters: {last_layer_params}')   
                                                                                                 
     # Initialise the model for the laplace approximation                                          
     la = Laplace(                                                                                 
@@ -274,8 +269,7 @@ def train_laplace(model, train_loader, val_loader, criterion, target, logger, mo
     # Optimise the prior precision                                                                                                                      
     la.optimize_prior_precision_base(                                                             
         method='marglik',                                                                         
-        pred_type='nn',                                                                           
-        val_loader=val_loader,                                                                    
+        pred_type='nn',                                                                
         loss=criterion                                                                       
         )                                                                                         
     logger.info(f"Prior precision optimised. Time: {time.perf_counter() - bayes_start_time:.2f}\n")    
@@ -289,66 +283,196 @@ def train_laplace(model, train_loader, val_loader, criterion, target, logger, mo
         hyper_optimizer.step()                        
                                                                                                                                                                 
     torch.save({'model_state_dict': la.state_dict()},                                                                            
-            os.path.join(os.getcwd(), f'checkpoints/Checkpoint_Laplace.pth.tar'))
+            os.path.join(os.getcwd(), f'checkpoints/Checkpoint_{model_type}.pth.tar'))
     
     return la
 
 
 
+def get_early_stopping(
+    epochs, criterion, norm_factor, target, train_data, 
+    device, amp_autocast, loss_scaler, print_freq, 
+    logger, wandb, model_type, patience, batch_size, args,
+    model_creator
+    ):
 
-def model_trainer(scheduler, model, criterion, 
-                  norm_factor, target, train_loader,
-                  val_loader, test_loader,
-                  optimizer, device, epochs, model_ema, 
-                  amp_autocast, loss_scaler, print_freq, 
-                  logger, wandb, model_type):
-    best_epoch, best_train_err, best_val_err, best_test_err = 0, float('inf'), float('inf'), float('inf')
-    best_ema_epoch, best_ema_val_err, best_ema_test_err = 0, float('inf'), float('inf')               
+    logger.info(f"Starting validation step for early stopping.\n")
     
-    logger.info(f"Initiating training.\n")                       
+    best_epoch, best_train_err, best_val_err = 0, float('inf'), float('inf')
+    counter_val = 0
 
-    for epoch in range(epochs):                                                                  
-        epoch_process(
+    proportion = 0.8
+    indices = torch.randperm(len(train_data)).tolist()
+    train_idx = indices[:int(proportion * len(indices))]
+    val_idx = indices[int(proportion * len(indices)):]
+
+    train_set = train_data[:len(train_idx)].copy()
+    train_set.data, train_set.slices = QM9.collate([train_data[i] for i in train_idx])
+
+    val_set = train_data[:len(val_idx)].copy()
+    val_set.data, val_set.slices = QM9.collate([train_data[i] for i in val_idx])
+
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
+    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
+    
+    model = model_creator(
+        num_atoms=0, bond_feat_dim=0, num_targets=0, lmax_list=[args.lmax], mmax_list=[args.lmax]
+    ) if args.model_type == "Laplace" else model_creator()
+
+    setattr(model, '_name', args.model_type)
+    model.to(device)
+  
+    optimizer = create_optimizer(args, model)
+    scheduler, _ = create_scheduler(args, optimizer)
+
+    result = epochs
+
+    for epoch in range(epochs):
+
+        epoch_start_time = time.perf_counter()                                                        
+
+        train_err, train_loss, val_err, val_loss = epoch_process(epoch=epoch,
             scheduler=scheduler, model=model, criterion=criterion, norm_factor=norm_factor, 
-            target=target, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, 
-            optimizer=optimizer, device=device, epoch=epoch, model_ema=model_ema, amp_autocast=amp_autocast,
-            loss_scaler=loss_scaler, print_freq=print_freq, logger=logger, wandb=wandb, model_type=model_type,
-            best_epoch=best_epoch, best_train_err=best_train_err, best_val_err=best_val_err, 
-            best_test_err=best_test_err, best_ema_epoch=best_ema_epoch, best_ema_val_err=best_ema_val_err, 
-            best_ema_test_err=best_ema_test_err) 
+            target=target, train_loader=train_loader, val_loader=val_loader, 
+            optimizer=optimizer, device=device, amp_autocast=amp_autocast,
+            loss_scaler=loss_scaler, print_freq=print_freq, logger=logger, model_type=model_type) 
+
+        if val_err < best_val_err:       
+            best_val_err = val_err                                                                                                                                 
+            best_train_err = train_err                                                                
+            best_epoch = epoch 
+        else:
+            counter_val += 1
+
+        info_str = f'Epoch: [{epoch}] Target: [{target}] train MAE: {train_err:.5f}, '           
+        info_str += f'val MAE: {val_err:.5f}, '                                            
+        info_str += f'Time: {time.perf_counter() - epoch_start_time:.2f}s'                            
+        logger.info(info_str)                                                                           
+                                                                                                    
+        wandb.log({
+            "Stopping MAE Train": train_err,
+            "Stopping Loss Train": train_loss,
+            "Stopping MAE Validation": val_err,
+            "Stopping Loss Validation": val_loss
+        }) 
+                                                                                                    
+        if counter_val >= patience:
+            logger.info(f'Early stopping at Epoch: [{epoch}/{epochs}].\n')
+            result = epoch
+            break
+        
+    info_str = f'Best -- epoch={best_epoch}, train MAE: {best_train_err:.5f}, '                   
+    info_str += f'val MAE: {best_val_err:.5f}.\n'                    
+    logger.info(info_str)
+
+    del train_loader, val_loader, train_set, val_set, optimizer, scheduler, model
+    torch.cuda.empty_cache()
+    gc.collect()
+
+    logger.info(f"Early stopping computation complete.\n")
+    return result
+
+
+
+
+def model_trainer(model, criterion, norm_factor, target, train_data, test_loader,
+                  device, epochs, amp_autocast, loss_scaler, print_freq, 
+                  logger, wandb, model_type, patience, batch_size, args, model_creator): 
+
+    best_epoch, best_train_err = 0, float('inf')
+
+    logger.info(f"Initiating training.\n")
+
+    stopping = get_early_stopping(
+        epochs, criterion, norm_factor, target, train_data,
+        device, amp_autocast, loss_scaler, print_freq,
+        logger, wandb, model_type, patience, batch_size, args, 
+        model_creator
+    )
+    model = model_creator(
+        num_atoms=0, bond_feat_dim=0, num_targets=0, lmax_list=[args.lmax], mmax_list=[args.lmax]
+    ) if args.model_type == "Laplace" else model_creator()
+    setattr(model, '_name', args.model_type)
+    model.to(device)
+
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
+
+    optimizer = create_optimizer(args, model)
+    scheduler, _ = create_scheduler(args, optimizer)
+    
+    for epoch in range(stopping):
+
+        scheduler.step(epoch)
+
+        epoch_start_time = time.perf_counter()                                                        
+
+        train_err, train_loss = train_one_epoch(model=model, criterion=criterion, norm_factor=norm_factor,        
+            target=target, data_loader=train_loader, optimizer=optimizer,                        
+            device=device, epoch=epoch,                                          
+            amp_autocast=amp_autocast, loss_scaler=loss_scaler,                                       
+            print_freq=print_freq, logger=logger, model_type=model_type) 
+
+        if train_err < best_train_err:       
+            best_train_err = train_err                                         
+            best_epoch = epoch 
+
+        info_str = f'Epoch: [{epoch}] Target: [{target}] train MAE: {train_err:.5f}, '                                                       
+        info_str += f'Time: {time.perf_counter() - epoch_start_time:.2f}s'                            
+        logger.info(info_str)                                                                                                                                               
+                                                                                                    
+        if epoch % 10 == 0:                                                                           
+            torch.save({                                                                              
+                'epoch': epoch,                                                                   
+                'model_state_dict': model.state_dict(),                                           
+                'optimizer_state_dict': optimizer.state_dict(),                                   
+                'scheduler_state_dict': scheduler.state_dict(),                                
+                'loss': train_err,                                      
+                },                                                                                
+                os.path.join(os.getcwd(), f'checkpoints/Checkpoint_{model_type}.pth.tar')
+            )  
+
+        wandb.log({
+            "MAE Train": train_err,
+            "Loss Train": train_loss
+        })
+
+    info_str = f'Best -- epoch={best_epoch}, train MAE: {best_train_err:.5f}.\n'                    
+    logger.info(info_str)
 
     if model_type == "Laplace" or model_type == "BGNN":  
         model.eval()                                                                
         trained_model = train_laplace(
-            model=model, train_loader=train_loader, val_loader=val_loader, criterion=criterion, 
+            model=model, train_loader=train_loader, criterion=criterion, 
             target=target, logger=logger, epochs=epochs, model_type=model_type
         )                          
 
     # Evaluate the model                                                                              
-    logger.info(f"\nEvaluating model.")                                                                   
+    logger.info(f"Evaluating model.")                                                                   
 
-    if model_type != "Laplace":                                                                  
+    if model_type != "Laplace" and model_type != "BGNN":                                                                  
         model.eval()      
 
     y = torch.tensor([], device=device, requires_grad=False)                                          
     pred = torch.tensor([], device=device, requires_grad=False)                                                                 
+    sigma = torch.tensor([], device=device, requires_grad=False)                                                                 
                                                                                                     
     with torch.no_grad():                                                                             
-        for _, data in enumerate(val_loader):                                                         
-
-            data = data.to(device)       
+        for _, data in enumerate(test_loader):                                                         
+            data = data.to(device)
 
             if model_type == "Laplace" or model_type == "BGNN":    
-                pred_i, _ = trained_model(data)        
+                pred_i, sigma_i = trained_model(data)        
             elif model_type == "Variational":
-                _, pred_i, _ = model(data)
+                _, pred_i, sigma_i = model(data)
             else:
                 pred_i = model(data)
 
             pred_i = pred_i.detach() * norm_factor[1] + norm_factor[0]                      
+            sigma_i = torch.sqrt(sigma_i.detach()) * norm_factor[1]                   
 
             y = torch.cat([y.flatten(), data.y[:, target].flatten()])                            
             pred = torch.cat([pred.flatten(), pred_i.flatten()])  
+            sigma = torch.cat([sigma.flatten(), sigma_i.flatten()])
             
             del data
             torch.cuda.empty_cache()
@@ -357,6 +481,7 @@ def model_trainer(scheduler, model, criterion,
     logger.info(f"Preparing calibration plot.\n")  
     calibration_plot(
         pred_mu=pred.cpu(), 
+        pred_sigma=sigma.cpu(),
         obs=y.cpu(), 
         wandb=wandb,
         logger=logger
@@ -364,98 +489,30 @@ def model_trainer(scheduler, model, criterion,
 
     logger.info(f"Training complete.\n")                 
 
-    del y, pred
+    del y, pred, best_epoch, best_train_err, optimizer, scheduler, train_loader
     torch.cuda.empty_cache()
     gc.collect()               
     
-    return trained_model if model_type == "Laplace" or model_type == "BGNN" else None
+    return trained_model if model_type == "Laplace" or model_type == "BGNN" else model
  
 
 
 
-def epoch_process(scheduler, model, criterion, 
-                  norm_factor, target, train_loader,
-                  val_loader, test_loader,
-                  optimizer, device, epoch, model_ema, 
-                  amp_autocast, loss_scaler, print_freq, 
-                  logger, wandb, model_type,
-                  best_epoch, best_train_err, 
-                  best_val_err, best_test_err, 
-                  best_ema_epoch, best_ema_val_err, 
-                  best_ema_test_err):
-                                                                                                
-        epoch_start_time = time.perf_counter()                                                        
-                                                                                                    
-        scheduler.step(epoch)                                                                      
-                                                                                                    
-        train_err = train_one_epoch(model=model, criterion=criterion, norm_factor=norm_factor,        
+def epoch_process(scheduler, model, criterion, target,
+                  norm_factor,train_loader, val_loader, 
+                  optimizer, device, amp_autocast, 
+                  loss_scaler, print_freq, logger, 
+                  model_type, epoch):
+                                                                                               
+    scheduler.step(epoch)  
+
+    train_err, train_loss = train_one_epoch(model=model, criterion=criterion, norm_factor=norm_factor,        
             target=target, data_loader=train_loader, optimizer=optimizer,                        
-            device=device, epoch=epoch, model_ema=model_ema,                                          
+            device=device, epoch=epoch,                                          
             amp_autocast=amp_autocast, loss_scaler=loss_scaler,                                       
-            print_freq=print_freq, logger=logger, wandb=wandb, model_type=model_type)           
+            print_freq=print_freq, logger=logger, model_type=model_type)           
                                                                                                     
-        val_err, _ = evaluate(model, norm_factor, target, val_loader, device,             
-            amp_autocast=amp_autocast, model_type=model_type)                       
-                                                                                                    
-        test_err, _ = evaluate(model, norm_factor, target, test_loader, device,          
-            amp_autocast=amp_autocast, model_type=model_type)                       
-        wandb.log({                                                                                   
-            "Validation Error": val_err,                                                              
-            "Test Error": test_err,                                                                   
-        })                                                                                            
-                                                                                                    
-        # record the best results                                                                     
-        if val_err < best_val_err:                                                                    
-            best_val_err = val_err                                                                    
-            best_test_err = test_err                                                                  
-            best_train_err = train_err                                                                
-            best_epoch = epoch                                                                        
-                                                                                                    
-        info_str = f'Epoch: [{epoch}] Target: [{target}] train MAE: {train_err:.5f}, '           
-        info_str += f'val MAE: {val_err:.5f}, '                                                       
-        info_str += f'test MAE: {test_err:.5f}, '                                                     
-        info_str += f'Time: {time.perf_counter() - epoch_start_time:.2f}s'                            
-        logger.info(info_str)                                                                           
-                                                                                                    
-        info_str = f'Best -- epoch={best_epoch}, train MAE: {best_train_err:.5f}, '                   
-        info_str += f'val MAE: {best_val_err:.5f}, test MAE: {best_test_err:.5f}.\n'                    
-        logger.info(info_str)                                                                           
-                                                                                                    
-        # evaluation with EMA                                                                         
-        if model_ema is not None:                                                                     
-            ema_val_err, _ = evaluate(model_ema.module, norm_factor, target, val_loader, device, 
-                amp_autocast=amp_autocast, model_type=model_type)                   
-                                                                                                    
-            ema_test_err, _ = evaluate(model_ema.module, norm_factor, target, test_loader, device,
-                amp_autocast=amp_autocast, model_type=model_type)                   
-                                                                                                    
-            # record the best results                                                                 
-            if (ema_val_err) < best_ema_val_err:                                                      
-                best_ema_val_err = ema_val_err                                                        
-                best_ema_test_err = ema_test_err                                                      
-                best_ema_epoch = epoch                                                                
-                                                                                                    
-            info_str = f'Epoch: [{epoch}] Target: [{target}] '                                   
-            info_str += f'EMA val MAE: {ema_val_err:.5f}, '                                           
-            info_str += f'EMA test MAE: {ema_test_err:.5f}, '                                         
-            info_str += f'Time: {time.perf_counter() - epoch_start_time:.2f}s'                        
-            logger.info(info_str)                                                                       
-                                                                                                    
-            info_str = f'Best EMA -- epoch={best_ema_epoch}, '                                        
-            info_str += f'val MAE: {best_ema_val_err:.5f}, '                                          
-            info_str += f'test MAE: {best_ema_test_err:.5f}.\n'                                         
-            logger.info(info_str)                                                                       
-                                                                                                    
-        if epoch % 10 == 0:                                                                           
-            torch.save({                                                                              
-                    'epoch': epoch,                                                                   
-                    'model_state_dict': model.state_dict(),                                           
-                    'optimizer_state_dict': optimizer.state_dict(),                                   
-                    'scheduler_state_dict': scheduler.state_dict(),                                
-                    'loss': train_err,                                                                
-                    },                                                                                
-                    os.path.join(os.getcwd(), f'checkpoints/Checkpoint_{model_type}.pth.tar'))   
-        
-        del val_err, test_err, train_err
-        torch.cuda.empty_cache()
-        gc.collect() 
+    val_err, val_loss = evaluate(model, norm_factor, target, val_loader, device,             
+            amp_autocast=amp_autocast, model_type=model_type)                                  
+                                                                                                                                                                                                                                                       
+    return train_err, train_loss, val_err, val_loss
