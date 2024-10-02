@@ -1,169 +1,0 @@
-Thu Jul 4 19:11:27 EDT 2024: Job 12851465 is allocated resources.
-Inside slurm_launcher.slrm (/var/spool/slurmd/job12851465/slurm_script). received arguments: main.py --output-dir results/models/laplace --model-name equiformer_v2 --data-path datasets/qm9 --model-type Laplace --epochs 2 --iterations 30 --seed 0
-Namespace(output_dir='results/models/laplace', model_name='equiformer_v2', model_type='Laplace', input_irreps=None, radius=5.0, num_basis=32, output_channels=1, lmax=4, epochs=2, iterations=30, batch_size=64, model_ema=True, model_ema_decay=0.9999, model_ema_force_cpu=False, drop_path_rate=0.1, patience=50, opt='adamw', opt_eps=1e-08, opt_betas=None, clip_grad=None, momentum=0.9, weight_decay=0.01, sched='cosine', lr=0.0005, lr_noise=None, lr_noise_pct=0.67, lr_noise_std=1.0, warmup_lr=1e-06, min_lr=1e-05, decay_epochs=30, warmup_epochs=5, cooldown_epochs=10, patience_epochs=10, decay_rate=0.1, print_freq=100, target=4, data_path='datasets/qm9', feature_type='one_hot', compute_stats=False, standardize=True, loss='l1', seed=0, workers=4, pin_mem=True, amp=False, prototyping=True, noise_sigma=0.02, denoising_coef=0.1, denoising_prob=0.5, corrupt_ratio=0.125)
-500 response executing GraphQL.
-{"error":"An internal error occurred. Please contact support."}
-500 response executing GraphQL.
-{"error":"An internal error occurred. Please contact support."}
-500 response executing GraphQL.
-{"error":"An internal error occurred. Please contact support."}
-wandb: Network error (HTTPError), entering retry loop.
-wandb: W&B API key is configured. Use `wandb login --relogin` to force relogin
-wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: | Waiting for wandb.init()...wandb: / Waiting for wandb.init()...wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: | Waiting for wandb.init()...wandb: / Waiting for wandb.init()...wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: | Waiting for wandb.init()...wandb: / Waiting for wandb.init()...wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: | Waiting for wandb.init()...wandb: / Waiting for wandb.init()...wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: | Waiting for wandb.init()...wandb: / Waiting for wandb.init()...wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: | Waiting for wandb.init()...wandb: / Waiting for wandb.init()...wandb: wandb version 0.17.4 is available!  To upgrade, please run:
-wandb:  $ pip install wandb --upgrade
-wandb: Tracking run with wandb version 0.17.0
-wandb: Run data is saved locally in /fs01/home/aguzmanc/3D_Bayes/wandb/run-20240704_191159-5nyqi5q7
-wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run Laplace, 0, L=M=4
-wandb: ⭐️ View project at https://wandb.ai/andresguzco/3D_Bayes
-wandb: 🚀 View run at https://wandb.ai/andresguzco/3D_Bayes/runs/5nyqi5q7
-Training set mean: 6.820860385894775, std:1.4590328931808472
-EquiformerV2(
-  (sphere_embedding): Embedding(90, 128)
-  (distance_expansion): GaussianSmearing()
-  (SO3_rotation): ModuleList(
-    (0): SO3_Rotation(
-      (mapping): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
-    )
-  )
-  (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
-  (SO3_grid): (4, 4)
-  (edge_degree_embedding): EdgeDegreeEmbedding(
-    (SO3_rotation): ModuleList(
-      (0): SO3_Rotation(
-        (mapping): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
-      )
-    )
-    (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
-    (source_embedding): Embedding(90, 64)
-    (target_embedding): Embedding(90, 64)
-    (rad_func): RadialFunction(
-      (net): Sequential(
-        (0): Linear(in_features=728, out_features=64, bias=True)
-        (1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-        (2): SiLU()
-        (3): Linear(in_features=64, out_features=64, bias=True)
-        (4): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-        (5): SiLU()
-        (6): Linear(in_features=64, out_features=640, bias=True)
-      )
-    )
-  )
-  (blocks): ModuleList(
-    (0-1): 2 x TransBlockV2(
-      (norm_1): EquivariantRMSNormArraySphericalHarmonicsV2(lmax=4, num_channels=128, eps=1e-05, centering=True, std_balance_degrees=True)
-      (ga): SO2EquivariantGraphAttention(
-        (SO3_rotation): ModuleList(
-          (0): SO3_Rotation(
-            (mapping): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
-          )
-        )
-        (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
-        (SO3_grid): (4, 4)
-        (source_embedding): Embedding(90, 64)
-        (target_embedding): Embedding(90, 64)
-        (so2_conv_1): SO2_Convolution(
-          (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
-          (fc_m0): Linear(in_features=1280, out_features=896, bias=True)
-          (so2_m_conv): ModuleList(
-            (0): SO2_m_Convolution(
-              (fc): Linear(in_features=1024, out_features=1024, bias=False)
-            )
-            (1): SO2_m_Convolution(
-              (fc): Linear(in_features=768, out_features=768, bias=False)
-            )
-            (2): SO2_m_Convolution(
-              (fc): Linear(in_features=512, out_features=512, bias=False)
-            )
-            (3): SO2_m_Convolution(
-              (fc): Linear(in_features=256, out_features=256, bias=False)
-            )
-          )
-          (rad_func): RadialFunction(
-            (net): Sequential(
-              (0): Linear(in_features=728, out_features=64, bias=True)
-              (1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-              (2): SiLU()
-              (3): Linear(in_features=64, out_features=64, bias=True)
-              (4): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-              (5): SiLU()
-              (6): Linear(in_features=64, out_features=3840, bias=True)
-            )
-          )
-        )
-        (alpha_norm): LayerNorm((32,), eps=1e-05, elementwise_affine=True)
-        (alpha_act): SmoothLeakyReLU(negative_slope=0.2)
-        (alpha_dropout): Dropout(p=0.1, inplace=False)
-        (s2_act): SeparableS2Activation(
-          (scalar_act): SiLU()
-          (s2_act): S2Activation(
-            (act): SiLU()
-          )
-        )
-        (so2_conv_2): SO2_Convolution(
-          (mappingReduced): CoefficientMappingModule(lmax_list=[4], mmax_list=[4])
-          (fc_m0): Linear(in_features=640, out_features=320, bias=True)
-          (so2_m_conv): ModuleList(
-            (0): SO2_m_Convolution(
-              (fc): Linear(in_features=512, out_features=512, bias=False)
-            )
-            (1): SO2_m_Convolution(
-              (fc): Linear(in_features=384, out_features=384, bias=False)
-            )
-            (2): SO2_m_Convolution(
-              (fc): Linear(in_features=256, out_features=256, bias=False)
-            )
-            (3): SO2_m_Convolution(
-              (fc): Linear(in_features=128, out_features=128, bias=False)
-            )
-          )
-        )
-        (proj): SO3_LinearV2(in_features=64, out_features=128, lmax=4)
-      )
-      (drop_path): GraphDropPath(drop_prob=0.05)
-      (norm_2): EquivariantRMSNormArraySphericalHarmonicsV2(lmax=4, num_channels=128, eps=1e-05, centering=True, std_balance_degrees=True)
-      (ffn): FeedForwardNetwork(
-        (SO3_grid): (4, 4)
-        (so3_linear_1): SO3_LinearV2(in_features=128, out_features=415, lmax=4)
-        (gating_linear): Linear(in_features=128, out_features=415, bias=True)
-        (s2_act): SeparableS2Activation(
-          (scalar_act): SiLU()
-          (s2_act): S2Activation(
-            (act): SiLU()
-          )
-        )
-        (so3_linear_2): SO3_LinearV2(in_features=415, out_features=128, lmax=4)
-      )
-    )
-  )
-  (norm): EquivariantRMSNormArraySphericalHarmonicsV2(lmax=4, num_channels=128, eps=1e-05, centering=True, std_balance_degrees=True)
-  (energy_block): FeedForwardNetwork(
-    (SO3_grid): (4, 4)
-    (so3_linear_1): SO3_LinearV2(in_features=128, out_features=415, lmax=4)
-    (gating_linear): Linear(in_features=128, out_features=415, bias=True)
-    (s2_act): SeparableS2Activation(
-      (scalar_act): SiLU()
-      (s2_act): S2Activation(
-        (act): SiLU()
-      )
-    )
-    (so3_linear_2): SO3_LinearV2(in_features=415, out_features=1, lmax=4)
-  )
-)
-Number of params: 9939670
-Initiating training.
-
-Starting validation step for early stopping.
-
-Traceback (most recent call last):
-  File "/h/aguzmanc/3D_Bayes/main.py", line 232, in <module>
-    main(args)
-  File "/h/aguzmanc/3D_Bayes/main.py", line 168, in main
-    trained_model = model_trainer(
-  File "/fs01/home/aguzmanc/3D_Bayes/Pipeline/engine.py", line 386, in model_trainer
-    stopping = get_early_stopping(
-  File "/fs01/home/aguzmanc/3D_Bayes/Pipeline/engine.py", line 318, in get_early_stopping
-    model = create_model(
-NameError: name 'create_model' is not defined
-wandb: Network error (ReadTimeout), entering retry loop.
-slurmstepd: error: *** JOB 12851465 ON gpu152 CANCELLED AT 2024-07-04T19:16:28 ***

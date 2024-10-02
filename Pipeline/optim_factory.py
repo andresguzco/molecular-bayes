@@ -59,19 +59,20 @@ def optimizer_kwargs(cfg):
     return kwargs
 
 
-def create_optimizer(args, model, filter_bias_and_bn=True):
+def create_optimizer(args, encoder, decoder, filter_bias_and_bn=True):
     """ Legacy optimizer factory for backwards compatibility.
     NOTE: Use create_optimizer_v2 for new code.
     """
     return create_optimizer_v2(
-        model,
+        encoder, decoder,
         **optimizer_kwargs(cfg=args),
         filter_bias_and_bn=filter_bias_and_bn,
     )
 
 
 def create_optimizer_v2(
-        model: nn.Module,
+        encoder: nn.Module,
+        decoder: nn.ModuleList,
         optimizer_name: str = 'sgd',
         learning_rate: Optional[float] = None,
         weight_decay: float = 0.,
@@ -100,12 +101,12 @@ def create_optimizer_v2(
     opt_lower = optimizer_name.lower()
     if weight_decay and filter_bias_and_bn:
         skip = {}
-        if hasattr(model, 'no_weight_decay'):
-            skip = model.no_weight_decay()
-        parameters = add_weight_decay(model, weight_decay, skip)
+        if hasattr(encoder, 'no_weight_decay'):
+            skip = encoder.no_weight_decay()
+        parameters = add_weight_decay(encoder, weight_decay, skip)
         weight_decay = 0.
     else:
-        parameters = model.parameters()
+        parameters = list(encoder.parameters()) + [param for head in decoder for param in head.parameters()]
     #if 'fused' in opt_lower:
     #    assert has_apex and torch.cuda.is_available(), 'APEX and CUDA required for fused optimizers'
 

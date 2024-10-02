@@ -1,6 +1,0 @@
-Thu Jul 4 19:09:25 EDT 2024: Job 12851459 is allocated resources.
-Inside slurm_launcher.slrm (/var/spool/slurmd/job12851459/slurm_script). received arguments: main.py --output-dir results/models/laplace --model-name equiformer_v2 --data-path datasets/qm9 --model-type Laplace --epochs 2 --iterations 30 --seed 0
-  File "/h/aguzmanc/3D_Bayes/main.py", line 108
-    _log.info(model)
-                    ^
-IndentationError: unindent does not match any outer indentation level

@@ -226,6 +226,30 @@ class SO3_Embedding():
         self.set_embedding(embedding)
         self.set_lmax_mmax(lmax_list, lmax_list.copy())
 
+    @property
+    def shape(self):
+        if self.embedding is None:
+            raise AttributeError("The 'embedding' attribute has not been set.")
+        return self.embedding.shape
+
+    def to(self, device, dtype=None):
+        """
+        Moves and/or casts the parameters and buffers.
+        
+        Args:
+            device (torch.device or str): The desired device of the parameters and buffers.
+            dtype (torch.dtype, optional): The desired dtype of the parameters and buffers.
+        
+        Returns:
+            self: SO3_Embedding instance.
+        """
+        self.device = device
+        if dtype:
+            self.dtype = dtype
+
+        self.embedding = self.embedding.to(device, dtype if dtype else self.embedding.dtype)
+
+        return self
 
     # Clone an embedding of irreps
     def clone(self):
@@ -730,7 +754,27 @@ class SO3_LinearVariational(torch.nn.Module):
         out_embedding.set_embedding(out_sample)
         out_embedding.set_lmax_mmax(input_embedding.lmax_list.copy(), input_embedding.lmax_list.copy())
 
-        return out_embedding, out_mean, out_std
+        out_mean_embedding = SO3_Embedding(
+            0,
+            input_embedding.lmax_list.copy(),
+            self.out_features,
+            device=input_embedding.device,
+            dtype=input_embedding.dtype
+        )
+        out_mean_embedding.set_embedding(out_mean)
+        out_mean_embedding.set_lmax_mmax(input_embedding.lmax_list.copy(), input_embedding.lmax_list.copy())
+
+        out_std_embedding = SO3_Embedding(
+            0,
+            input_embedding.lmax_list.copy(),
+            self.out_features,
+            device=input_embedding.device,
+            dtype=input_embedding.dtype
+        )
+        out_std_embedding.set_embedding(out_std)
+        out_std_embedding.set_lmax_mmax(input_embedding.lmax_list.copy(), input_embedding.lmax_list.copy())
+
+        return out_embedding, out_mean_embedding, out_std_embedding
 
         
 

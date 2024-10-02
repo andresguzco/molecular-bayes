@@ -32,7 +32,7 @@ from .layer_norm import (
     get_normalization_layer
 )
 from .transformer_block import (
-    SO2EquivariantGraphAttention,
+    # SO2EquivariantGraphAttention,
     FeedForwardNetwork,
     TransBlockV2, 
 )
@@ -104,28 +104,28 @@ class EquiformerV2(BaseModel):
 
         ### Current numbers are reduced for speed and testing
         num_layers=2,             # Originally 8
-        sphere_channels=128,       # Originally 128
-        attn_hidden_channels=128,  # Originally 128
+        sphere_channels=16,       # Originally 128
+        attn_hidden_channels=64,  # Originally 128
         num_heads=4,              # Originally 8
         attn_alpha_channels=32,    # Originally 32
         attn_value_channels=16,    # Originally 16
-        ffn_hidden_channels=512,   # Originally 512
+        ffn_hidden_channels=128,   # Originally 512
         ###
         
         norm_type='rms_norm_sh',
         
-        lmax_list=[4],            # Originally 4
-        mmax_list=[4],
+        lmax_list=[3],            # Originally 4
+        mmax_list=[3],
         grid_resolution=None, 
 
-        num_sphere_samples=164,    # Originally 164
+        num_sphere_samples=64,    # Originally 164
 
         edge_channels=64,         # Originally 64
         use_atom_edge_embedding=True,
         share_atom_edge_embedding=False,
         use_m_share_rad=False,
         distance_function="gaussian",
-        num_distance_basis=128,     # Originally 128
+        num_distance_basis=64,     # Originally 128
 
         attn_activation='scaled_silu',
         use_s2_act_attn=False, 
@@ -301,35 +301,66 @@ class EquiformerV2(BaseModel):
             )
             self.blocks.append(block)
 
+        self.noisy_embedding = TransBlockV2(
+                self.sphere_channels,
+                self.attn_hidden_channels,
+                self.num_heads,
+                self.attn_alpha_channels,
+                self.attn_value_channels,
+                self.ffn_hidden_channels,
+                self.sphere_channels, 
+                self.lmax_list,
+                self.mmax_list,
+                self.SO3_rotation,
+                self.mappingReduced,
+                self.SO3_grid,
+                self.max_num_elements,
+                self.edge_channels_list,
+                self.block_use_atom_edge_embedding,
+                self.use_m_share_rad,
+                self.attn_activation,
+                self.use_s2_act_attn,
+                self.use_attn_renorm,
+                self.ffn_activation,
+                self.use_gate_act,
+                self.use_grid_mlp,
+                self.use_sep_s2_act,
+                self.norm_type,
+                self.alpha_drop, 
+                self.drop_path_rate,
+                self.proj_drop
+        )
+
         
         # Output blocks for energy and forces
         self.norm = get_normalization_layer(self.norm_type, lmax=max(self.lmax_list), num_channels=self.sphere_channels)
-        self.energy_block = FeedForwardNetwork(
-            self.sphere_channels,
-            self.ffn_hidden_channels, 
-            1,
-            self.lmax_list,
-            self.mmax_list,
-            self.SO3_grid,  
-            self.ffn_activation,
-            self.use_gate_act,
-            self.use_grid_mlp,
-            self.use_sep_s2_act
-        )
-
-        # # Noisy Node Decoder
-        # self.noisy_node_decoder = FeedForwardNetwork(
+        self.noisy_norm = get_normalization_layer(self.norm_type, lmax=max(self.lmax_list), num_channels=self.sphere_channels)
+        # self.energy_block = FeedForwardNetwork(
         #     self.sphere_channels,
-        #     self.ffn_hidden_channels,
-        #     1, 
+        #     self.ffn_hidden_channels, 
+        #     1,
         #     self.lmax_list,
         #     self.mmax_list,
-        #     self.SO3_grid,
+        #     self.SO3_grid,  
         #     self.ffn_activation,
         #     self.use_gate_act,
         #     self.use_grid_mlp,
         #     self.use_sep_s2_act
         # )
+
+        # Noisy Node Decoder
+        self.noisy_node_decoder = FeedForwardNetwork(
+            self.sphere_channels,
+            self.ffn_hidden_channels,
+            1, 
+            self.lmax_list,
+            self.mmax_list,
+            self.SO3_grid,
+            self.ffn_activation,
+            self.use_gate_act,
+            self.use_grid_mlp,
+            self.use_sep_s2_act
+        )
             
         self.apply(self._init_weights)
         self.apply(self._uniform_init_rad_func_linear_weights)
@@ -341,7 +372,7 @@ class EquiformerV2(BaseModel):
 
 
     @conditional_grad(torch.enable_grad())
-    def forward(self, data, aux=False):
+    def forward(self, data):
         self.batch_size = data.natoms
         self.dtype = data.pos.dtype
         self.device = data.pos.device
@@ -356,19 +387,14 @@ class EquiformerV2(BaseModel):
             data.cell = None
 
         num_atoms = len(atomic_numbers)
-        if aux is False:
-            (
-                edge_index,
-                edge_distance,
-                edge_distance_vec,
-                _,
-                _,  # cell offset distances
-                _,
-            ) = self.generate_graph(data)
-        else:            
-            edge_index = self.batch_graph[0].to(self.device)
-            edge_distance = self.batch_graph[1].to(self.device)
-            edge_distance_vec = self.batch_graph[2].to(self.device)
+        (
+            edge_index,
+            edge_distance,
+            edge_distance_vec,
+            _,
+            _,  # cell offset distances
+            _,
+        ) = self.generate_graph(data)
 
         ###############################################################
         # Initialize data structures
@@ -440,19 +466,46 @@ class EquiformerV2(BaseModel):
                 batch=data.batch    # for GraphDropPath
             )
 
+        x_noisy = self.noisy_embedding(
+            x,                  # SO3_Embedding
+            atomic_numbers,
+            edge_distance,
+            edge_index,
+            batch=data.batch    # for GraphDropPath
+        )
+
         # Final layer norm
         x.embedding = self.norm(x.embedding)
 
-        ###############################################################
-        # Energy estimation
-        ###############################################################
-        node_energy = self.energy_block(x)
-        node_energy = node_energy.embedding.narrow(1, 0, 1)
-        energy = torch.zeros(len(data.natoms), device=node_energy.device, dtype=node_energy.dtype)
-        energy.index_add_(0, data.batch, node_energy.view(-1))
-        energy = energy / _AVG_NUM_NODES
+        # Noisy node decoder
+        x_noisy.embedding = self.noisy_norm(x_noisy.embedding)
+        denoised_positions = self.noisy_node_decoder(x_noisy)
+        denoised_positions = denoised_positions.embedding.narrow(1, 0, 3).squeeze()
         
-        return energy
+        # Extract L=0
+        output = torch.zeros(
+            x.length, self.sphere_channels, max(self.lmax_list) + 1, 
+            device=denoised_positions.device, 
+            dtype=denoised_positions.dtype
+        )
+        for i in range(max(self.lmax_list)+1):
+            start_index = sum(2*j+1 for j in range(i))
+            end_index = start_index + (2*i + 1)
+            norm = torch.norm(x.embedding[:, :, start_index:end_index], dim=2)
+            output[:, :, i] = norm
+
+        x.set_embedding(output)
+        
+        # Average pooling
+        encoding_dim =self.sphere_channels * (max(self.lmax_list) + 1)
+        res_embedding = x.embedding.view(x.length, encoding_dim)
+
+        res = torch.zeros(data.batch.max().item() + 1, encoding_dim, 
+                          device=x.embedding.device, dtype=x.embedding.dtype)
+        res.scatter_add_(0, data.batch.view(-1, 1).expand(-1, encoding_dim), res_embedding)
+        res = res / _AVG_NUM_NODES
+
+        return res, denoised_positions
 
 
     # Initialize the edge rotation matrics
@@ -492,7 +545,7 @@ class EquiformerV2(BaseModel):
             std = 1 / math.sqrt(m.in_features)
             torch.nn.init.uniform_(m.weight, -std, std)
 
-    
+
     @torch.jit.ignore
     def no_weight_decay(self):
         no_wd_list = []
@@ -516,3 +569,63 @@ class EquiformerV2(BaseModel):
                     assert global_parameter_name in named_parameters_list
                     no_wd_list.append(global_parameter_name)
         return set(no_wd_list)
+
+
+@registry.register_model("predictive_layer")
+class PredictiveLayer(nn.Module):
+    def __init__(
+        self,
+        sphere_channels = 16,
+        ffn_hidden_channels = 8,
+        lmax_list = [3],
+        mmax_list = [3],
+        SO3_grid_in = None,
+        ffn_activation = 'scaled_silu',
+        use_gate_act = False,
+        use_grid_mlp = False,
+        use_sep_s2_act = True
+        ):
+        super().__init__()
+        self.predictive_layer = FeedForwardNetwork(
+            sphere_channels=sphere_channels,
+            hidden_channels=ffn_hidden_channels,
+            output_channels=1, 
+            lmax_list=lmax_list,
+            mmax_list=mmax_list,
+            SO3_grid=SO3_grid_in,
+            activation=ffn_activation,
+            use_gate_act=use_gate_act,
+            use_grid_mlp=use_grid_mlp,
+            use_sep_s2_act=use_sep_s2_act,
+            variational=False
+        )
+
+
+    def forward(self, x):
+        res_embedding = self.predictive_layer(x)
+        res_embedding = res_embedding.embedding.narrow(1, 0, 1)
+
+        res = torch.zeros(len(x.natoms), device=res_embedding.device, dtype=res_embedding.dtype)
+        res.index_add_(0, x.batch, res_embedding.view(-1))
+        res = res / _AVG_NUM_NODES
+        return res
+
+
+@registry.register_model("predictive_layer_2")
+class PredictiveLayer(nn.Module):
+    def __init__(
+        self,
+        sphere_channels = 16,
+        ffn_hidden_channels = 10,
+        lmax_list = [3],
+        ):
+        super().__init__()
+        self.network = torch.nn.Sequential(
+            torch.nn.Linear(sphere_channels * (max(lmax_list) + 1), ffn_hidden_channels),
+            torch.nn.SiLU(),
+            torch.nn.Linear(ffn_hidden_channels, 1)
+            )
+
+    def forward(self, x):
+        return self.network(x)
+

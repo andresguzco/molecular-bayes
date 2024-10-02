@@ -383,7 +383,6 @@ class FeedForwardNetwork(torch.nn.Module):
         self.use_sep_s2_act = use_sep_s2_act
 
         self.max_lmax = max(self.lmax_list)
-        
         self.so3_linear_1 = SO3_LinearV2(self.sphere_channels_all, self.hidden_channels, lmax=self.max_lmax)
         if self.use_grid_mlp:
             if self.use_sep_s2_act:
@@ -411,14 +410,11 @@ class FeedForwardNetwork(torch.nn.Module):
                 else:
                     self.gating_linear = None
                     self.s2_act = S2Activation(self.max_lmax, self.max_lmax)
-        if variational:
-            self.so3_linear_2 = SO3_LinearVariational(self.hidden_channels, self.output_channels, lmax=self.max_lmax)
-        else:
-            self.so3_linear_2 = SO3_LinearV2(self.hidden_channels, self.output_channels, lmax=self.max_lmax)
+
+        self.so3_linear_2 = SO3_LinearV2(self.hidden_channels, self.output_channels, lmax=self.max_lmax)
         
     
     def forward(self, input_embedding):
-
         gating_scalars = None
         if self.use_grid_mlp:
             if self.use_sep_s2_act:
@@ -450,6 +446,7 @@ class FeedForwardNetwork(torch.nn.Module):
                     input_embedding.embedding = self.s2_act(gating_scalars, input_embedding.embedding, self.SO3_grid)
                 else:
                     input_embedding.embedding = self.s2_act(input_embedding.embedding, self.SO3_grid)
+        
 
         input_embedding = self.so3_linear_2(input_embedding)
 
