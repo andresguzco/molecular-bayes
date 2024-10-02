@@ -5,17 +5,24 @@ import gc
 import os
 import time
 import torch
+import random
 import torch_geometric
 from torch_cluster import radius_graph
 
 from .utils import calibration_plot
 from laplace import Laplace
-from laplace.curvature import CurvlinopsEF
+from laplace.curvature import (
+    AsdlEF,
+    AsdlGGN,
+    AsdlHessian,
+    BackPackGGN,
+    CurvlinopsEF,
+    CurvlinopsGGN,
+    CurvlinopsHessian,
+)
 from torch_geometric.loader import DataLoader
-from sklearn.model_selection import KFold
-from datasets.QM9 import QM9
-from timm.scheduler import create_scheduler
-from .optim_factory import create_optimizer
+from nets import ExactGPModel
+import gpytorch
 
 
 ModelEma = ModelEmaV2
@@ -39,22 +46,25 @@ class AverageMeter:
         self.avg = self.sum / self.count
 
 
+def denoising_loss(denoised_output, original_features):
+    return torch.nn.functional.mse_loss(denoised_output, original_features)
 
 
-def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
-                    norm_factor: list, 
-                    target: int,
-                    data_loader: Iterable, optimizer: torch.optim.Optimizer,
-                    device: torch.device, epoch: int, 
-                    amp_autocast=None,
-                    loss_scaler=None,
-                    clip_grad=None,
-                    print_freq: int = 100, 
-                    logger=None,
-                    model_type=False
-                    ):
+def add_noise_to_features(features, corrupt_ratio=0.1, noise_level=0.1):
+    num_features_to_corrupt = int(corrupt_ratio * features.size(0))
+    noise_indices = torch.randperm(features.size(0))[:num_features_to_corrupt]
+    noise = torch.randn_like(features[noise_indices]) * noise_level
+    noisy_features = features.clone()
+    noisy_features[noise_indices] += noise
+    return noisy_features
 
-    model.train()
+
+def train_one_epoch(encoder, decoder, criterion, norm_factor, target, data_loader, optimizer,
+                    device, epoch, amp_autocast=None, loss_scaler=None, clip_grad=None,
+                    print_freq=100, logger=None):
+
+    encoder.train()
+    decoder.train()
     criterion.train()
     
     loss_metric = AverageMeter()
@@ -67,36 +77,66 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     task_std  = norm_factor[1] 
     
     for step, data in enumerate(data_loader):
-        data = data.to(device)
-        with amp_autocast():
-            if model_type == "Variational":
-                pred, _, _ = model(data)
-            else:
-                pred = model(data)
-
-            pred = pred.squeeze()
-
-            loss = criterion(pred, (data.y[:, target] - task_mean) / task_std)
         
-        N = len(pred) if pred.dim() != 0 else 1
-            
-        if model_type == "Variational":
-            KL = BKLLoss(model)
-            KL_metric.update(KL.item(), n=N)
-            loss += KL.item()
+        # Apply denoising based on the denoising probability
+        if encoder.name == "equiformer_v2":
+            if random.random() < 0.5:
 
+                true_pos = data.pos
+                true_pos = true_pos.to(device)
+
+                data.pos = add_noise_to_features(data.pos)
+                data = data.to(device)
+
+                with amp_autocast():
+                    embedding, denoised_output = encoder(data)
+                    preds = [head(embedding) for head in decoder]
+
+                    loss = 0
+                    denoise_loss = denoising_loss(denoised_output, true_pos)
+                    loss += 0.1 * denoise_loss
+                    for i, pred in enumerate(preds):
+                        loss += criterion(pred.squeeze(), (data.y[:, target[i]] - task_mean[i]) / task_std[i])
+            else:
+
+                data = data.to(device)
+
+                with amp_autocast():
+                    embedding, _ = encoder(data)
+                    preds = [head(embedding) for head in decoder]
+
+                    loss = 0
+                    denoise_loss = 0
+                    loss += 0.1 * denoise_loss
+                    for i, pred in enumerate(preds):
+                        loss += criterion(pred.squeeze(), (data.y[:, target[i]] - task_mean[i]) / task_std[i])
+        else:
+            data = data.to(device)
+
+            with amp_autocast():
+                embedding = encoder(data)
+                preds = [head(embedding) for head in decoder]
+
+                loss = 0
+                for i, pred in enumerate(preds):
+                    loss += criterion(pred.squeeze(), (data.y[:, target[i]] - task_mean[i]) / task_std[i])
+
+        N = len(preds[0]) if preds[0].dim() != 0 else 1
+
+        params = [param for param in encoder.parameters()] + [param for head in decoder for param in head.parameters()]
         optimizer.zero_grad()
         if loss_scaler is not None:
-            loss_scaler(loss, optimizer, parameters=model.parameters())
+            loss_scaler(loss, optimizer, parameters=params)
         else:
             loss.backward()
             if clip_grad is not None:
-                dispatch_clip_grad(model.parameters(), 
-                    value=clip_grad, mode='norm')
-            optimizer.step()
+                dispatch_clip_grad(params, value=clip_grad, mode='norm')
+        optimizer.step()
         
         loss_metric.update(loss.item(), n=N)
-        err = pred.detach() * task_std + task_mean - data.y[:, target]
+
+        errors = [(pred.detach() * task_std[i] + task_mean[i] - data.y[:, target[i]]) / data.y[:, target[i]] for i, pred in enumerate(preds)]
+        err = torch.stack(errors, dim=0)
         mae_metric.update(torch.mean(torch.abs(err)).item(), n=N)
         
         # logging
@@ -107,52 +147,50 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             info_str += f'MAE: {mae_metric.avg:.5f}, time/step={(1e3 * w / e / len(data_loader)):.0f}ms, '
             info_str += f'lr={optimizer.param_groups[0]["lr"]:.2e}'
             logger.info(info_str)
-         
-        del pred, loss, err, data
-        torch.cuda.empty_cache()
-        gc.collect()
-        
+                 
     return mae_metric.avg, loss_metric.avg
 
 
 
 
-def evaluate(model, norm_factor, target, data_loader, device, amp_autocast=None, model_type='Base'):
-    
-    model.eval()
-    
+def evaluate(encoder, decoder, norm_factor, target, data_loader, device, amp_autocast=None):
+    encoder.eval()
+    decoder.eval()
+
     loss_metric = AverageMeter()
     mae_metric = AverageMeter()
     criterion = torch.nn.L1Loss()
     criterion.eval()
-    
+
     task_mean = norm_factor[0] 
     task_std  = norm_factor[1]
-    
+
     with torch.no_grad():
-            
+
         for data in data_loader:
             data = data.to(device)
 
             with amp_autocast():
-                if model_type == "Variational":
-                    pred, _, _ = model(data)
+                if encoder.name == "equiformer_v2":
+                    embedding, _ = encoder(data)
+                    preds = [head(embedding) for head in decoder]
                 else:
-                    pred = model(data)
+                    embedding = encoder(data)
+                    preds = [head(embedding) for head in decoder]
 
+            N = len(preds[0]) if preds[0].dim() != 0 else 1
+
+            loss = 0
+            for i, pred in enumerate(preds):
                 pred = pred.squeeze().detach()
-            
-            N = len(pred) if pred.dim() != 0 else 1
+                loss += criterion(pred, (data.y[:, target[i]] - task_mean[i]) / task_std[i])
 
-            loss = criterion(pred, (data.y[:, target] - task_mean) / task_std)
-            err = pred.detach() * task_std + task_mean - data.y[:, target]
-            
+            errors = [(pred.detach() * task_std[i] + task_mean[i] - data.y[:, target[i]]
+            ) / data.y[:, target[i]] for i, pred in enumerate(preds)]
+            err = torch.stack(errors, dim=0)
+
             loss_metric.update(loss.item(), n=N)
             mae_metric.update(torch.mean(torch.abs(err)).item(), n=N)
-        
-            del pred, loss, err, data
-            torch.cuda.empty_cache()
-            gc.collect() 
 
     return mae_metric.avg, loss_metric.avg
 
@@ -166,13 +204,13 @@ def compute_stats(data_loader, max_radius, logger, print_freq=1000):
     log_str = '\nCalculating statistics with '
     log_str = log_str + 'max_radius={}\n'.format(max_radius)
     logger.info(log_str)
-        
+
     avg_node = AverageMeter()
     avg_edge = AverageMeter()
     avg_degree = AverageMeter()
-    
+
     for step, data in enumerate(data_loader):
-        
+
         pos = data.pos
         batch = data.batch
         edge_src, _ = radius_graph(pos, r=max_radius, batch=batch, max_num_neighbors=1000)
@@ -181,11 +219,11 @@ def compute_stats(data_loader, max_radius, logger, print_freq=1000):
         num_edges = edge_src.shape[0]
         num_degree = torch_geometric.utils.degree(edge_src, num_nodes)
         num_degree = torch.sum(num_degree)
-            
+
         avg_node.update(num_nodes / batch_size, batch_size)
         avg_edge.update(num_edges / batch_size, batch_size)
         avg_degree.update(num_degree / (num_nodes), num_nodes)
-            
+
         if step % print_freq == 0 or step == (len(data_loader) - 1):
             log_str = '[{}/{}]\tavg node: {}, '.format(step, len(data_loader), avg_node.avg)
             log_str += 'avg edge: {}, '.format(avg_edge.avg)
@@ -193,291 +231,51 @@ def compute_stats(data_loader, max_radius, logger, print_freq=1000):
             logger.info(log_str)
 
 
+def train_laplace(model, loader, criterion, logger):
+    # Initialise the model for the laplace approximation
+    la = Laplace(
+        model, 
+        'regression',
+        subset_of_weights='all', 
+        hessian_structure='kron', 
+        backend=CurvlinopsGGN
+    )
 
+    # Fit the Laplace Approximation
+    bayes_start_time = time.perf_counter()
+    la.fit(loader)
+    logger.info(f"Laplace fitted. Time taken: {time.perf_counter() - bayes_start_time:.2f}")
 
-def _kl_loss(mu_0, log_sigma_0, mu_1, log_sigma_1):
-    kl = log_sigma_1 - log_sigma_0 + \
-    (torch.exp(log_sigma_0)**2 + (mu_0-mu_1)**2) / (2 * torch.exp(log_sigma_1)**2) - 0.5
-    return kl.sum(dim=1).mean()
-
-
-
-
-def BKLLoss(model) :
-    device = torch.device("cuda" if next(model.parameters()).is_cuda else "cpu")
-
-    m = model.energy_block.so3_linear_2
-
-    bias_mu = m.bias_mu.detach().to(device)
-    prior_mu = m.prior_mu.detach().to(device)
-    weight_mu = m.weight_mu.detach().to(device)
-
-    bias_log_sigma = m.bias_log_sigma.detach().to(device)
-    prior_log_sigma = m.prior_log_sigma.detach().to(device)
-    weight_log_sigma = m.weight_log_sigma.detach().to(device)
-
-    return (_kl_loss(weight_mu, weight_log_sigma, prior_mu, prior_log_sigma) 
-            + _kl_loss(bias_mu, bias_log_sigma, prior_mu, prior_log_sigma))
-
-
-
-
-def train_laplace(model, train_loader, criterion, target, logger, model_type, epochs=10):
-
-    if model_type == "Laplace":                            
-                                                                                                        
-        for parameter in model.sphere_embedding.parameters():                                         
-            parameter.requires_grad = False                                                           
-                                                                                                    
-        for block in model.blocks:                                                                    
-            for parameter in block.parameters():                                                      
-                parameter.requires_grad = False                                                       
-                                                                                                    
-        for parameter in model.norm.parameters():                                                     
-            parameter.requires_grad = False                                                           
-                                                                                                    
-        for parameter in model.edge_degree_embedding.parameters():                                    
-            parameter.requires_grad = False                                                           
-                                                                                                    
-        for parameter in model.energy_block.so3_linear_1.parameters():                                
-            parameter.requires_grad = False                                                           
-                                                                                                    
-        for parameter in model.energy_block.gating_linear.parameters():                               
-            parameter.requires_grad = False          
-
-    elif model_type == "BGNN":
-        for parameter in model.encoder_layer.parameters():
-            parameter.requires_grad = False                  
-
-    last_layer_params = sum([p.numel() for p in model.parameters() if p.requires_grad])      
-    logger.info(f'Laplace Layer Parameters: {last_layer_params}')   
-                                                                                                
-    # Initialise the model for the laplace approximation                                          
-    la = Laplace(                                                                                 
-        model,                                                                                    
-        'regression',                                                                             
-        hessian_structure='full',                                                                 
-        subset_of_weights='all',                                                                  
-        backend=CurvlinopsEF,                                                                      
-        )                                                                                         
-                                                                                                
-    # Fit the Laplace Approximation                 
-    bayes_start_time = time.perf_counter()                                  
-    la.fit(train_loader, is_equiformer=True, target=target)                                                                                         
-    logger.info(f"Laplace fitted. Time taken: {time.perf_counter() - bayes_start_time:.2f}")        
-                                                                                                
-    # Optimise the prior precision                                                                                                                      
-    la.optimize_prior_precision_base(                                                             
-        method='marglik',                                                                         
-        pred_type='nn',                                                                
-        loss=criterion                                                                       
-        )                                                                                         
-    logger.info(f"Prior precision optimised. Time: {time.perf_counter() - bayes_start_time:.2f}\n")    
-
-    log_prior, log_sigma = torch.ones(1, requires_grad=True), torch.ones(1, requires_grad=True)
-    hyper_optimizer = torch.optim.Adam([log_prior, log_sigma], lr=1e-1)
-    for _ in range(epochs):
-        hyper_optimizer.zero_grad()
-        neg_marglik = - la.log_marginal_likelihood(log_prior.exp(), log_sigma.exp())
-        neg_marglik.backward()
-        hyper_optimizer.step()                        
-                                                                                                                                                                
-    torch.save({'model_state_dict': la.state_dict()},                                                                            
-            os.path.join(os.getcwd(), f'checkpoints/Checkpoint_{model_type}.pth.tar'))
-    
+    # Optimise the prior precision
+    la.optimize_prior_precision(method='marglik', pred_type='nn', loss=criterion)
+    logger.info(f"Prior precision optimised. Time: {time.perf_counter() - bayes_start_time:.2f}\n")
     return la
 
 
+def get_performance_plot(model, norm_factor, target, test_loader,
+    device, logger, wandb, model_type): 
 
-def get_early_stopping(
-    epochs, criterion, norm_factor, target, train_data, 
-    device, amp_autocast, loss_scaler, print_freq, 
-    logger, wandb, model_type, patience, batch_size, args,
-    model_creator
-    ):
+    logger.info(f"Evaluating model.")
 
-    logger.info(f"Starting validation step for early stopping.\n")
-    
-    best_epoch, best_train_err, best_val_err = 0, float('inf'), float('inf')
-    counter_val = 0
+    if model_type != "Laplace":
+        model.eval()
 
-    proportion = 0.8
-    indices = torch.randperm(len(train_data)).tolist()
-    train_idx = indices[:int(proportion * len(indices))]
-    val_idx = indices[int(proportion * len(indices)):]
+    y = torch.tensor([], device=device, requires_grad=False)
+    pred = torch.tensor([], device=device, requires_grad=False)
+    sigma = torch.tensor([], device=device, requires_grad=False)
 
-    train_set = train_data[:len(train_idx)].copy()
-    train_set.data, train_set.slices = QM9.collate([train_data[i] for i in train_idx])
-
-    val_set = train_data[:len(val_idx)].copy()
-    val_set.data, val_set.slices = QM9.collate([train_data[i] for i in val_idx])
-
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
-    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
-    
-    model = model_creator(
-        num_atoms=0, bond_feat_dim=0, num_targets=0, lmax_list=[args.lmax], mmax_list=[args.lmax]
-    ) if args.model_type == "Laplace" else model_creator()
-
-    setattr(model, '_name', args.model_type)
-    model.to(device)
-  
-    optimizer = create_optimizer(args, model)
-    scheduler, _ = create_scheduler(args, optimizer)
-
-    result = epochs
-
-    for epoch in range(epochs):
-
-        epoch_start_time = time.perf_counter()                                                        
-
-        train_err, train_loss, val_err, val_loss = epoch_process(epoch=epoch,
-            scheduler=scheduler, model=model, criterion=criterion, norm_factor=norm_factor, 
-            target=target, train_loader=train_loader, val_loader=val_loader, 
-            optimizer=optimizer, device=device, amp_autocast=amp_autocast,
-            loss_scaler=loss_scaler, print_freq=print_freq, logger=logger, model_type=model_type) 
-
-        if val_err < best_val_err:       
-            best_val_err = val_err                                                                                                                                 
-            best_train_err = train_err                                                                
-            best_epoch = epoch 
-        else:
-            counter_val += 1
-
-        info_str = f'Epoch: [{epoch}] Target: [{target}] train MAE: {train_err:.5f}, '           
-        info_str += f'val MAE: {val_err:.5f}, '                                            
-        info_str += f'Time: {time.perf_counter() - epoch_start_time:.2f}s'                            
-        logger.info(info_str)                                                                           
-                                                                                                    
-        wandb.log({
-            "Stopping MAE Train": train_err,
-            "Stopping Loss Train": train_loss,
-            "Stopping MAE Validation": val_err,
-            "Stopping Loss Validation": val_loss
-        }) 
-                                                                                                    
-        if counter_val >= patience:
-            logger.info(f'Early stopping at Epoch: [{epoch}/{epochs}].\n')
-            result = epoch
-            break
-        
-    info_str = f'Best -- epoch={best_epoch}, train MAE: {best_train_err:.5f}, '                   
-    info_str += f'val MAE: {best_val_err:.5f}.\n'                    
-    logger.info(info_str)
-
-    del train_loader, val_loader, train_set, val_set, optimizer, scheduler, model
-    torch.cuda.empty_cache()
-    gc.collect()
-
-    logger.info(f"Early stopping computation complete.\n")
-    return result
-
-
-
-
-def model_trainer(model, criterion, norm_factor, target, train_data, test_loader,
-                  device, epochs, amp_autocast, loss_scaler, print_freq, 
-                  logger, wandb, model_type, patience, batch_size, args, model_creator): 
-
-    best_epoch, best_train_err = 0, float('inf')
-
-    logger.info(f"Initiating training.\n")
-
-    stopping = get_early_stopping(
-        epochs, criterion, norm_factor, target, train_data,
-        device, amp_autocast, loss_scaler, print_freq,
-        logger, wandb, model_type, patience, batch_size, args, 
-        model_creator
-    )
-    model = model_creator(
-        num_atoms=0, bond_feat_dim=0, num_targets=0, lmax_list=[args.lmax], mmax_list=[args.lmax]
-    ) if args.model_type == "Laplace" else model_creator()
-    setattr(model, '_name', args.model_type)
-    model.to(device)
-
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
-
-    optimizer = create_optimizer(args, model)
-    scheduler, _ = create_scheduler(args, optimizer)
-    
-    for epoch in range(stopping):
-
-        scheduler.step(epoch)
-
-        epoch_start_time = time.perf_counter()                                                        
-
-        train_err, train_loss = train_one_epoch(model=model, criterion=criterion, norm_factor=norm_factor,        
-            target=target, data_loader=train_loader, optimizer=optimizer,                        
-            device=device, epoch=epoch,                                          
-            amp_autocast=amp_autocast, loss_scaler=loss_scaler,                                       
-            print_freq=print_freq, logger=logger, model_type=model_type) 
-
-        if train_err < best_train_err:       
-            best_train_err = train_err                                         
-            best_epoch = epoch 
-
-        info_str = f'Epoch: [{epoch}] Target: [{target}] train MAE: {train_err:.5f}, '                                                       
-        info_str += f'Time: {time.perf_counter() - epoch_start_time:.2f}s'                            
-        logger.info(info_str)                                                                                                                                               
-                                                                                                    
-        if epoch % 10 == 0:                                                                           
-            torch.save({                                                                              
-                'epoch': epoch,                                                                   
-                'model_state_dict': model.state_dict(),                                           
-                'optimizer_state_dict': optimizer.state_dict(),                                   
-                'scheduler_state_dict': scheduler.state_dict(),                                
-                'loss': train_err,                                      
-                },                                                                                
-                os.path.join(os.getcwd(), f'checkpoints/Checkpoint_{model_type}.pth.tar')
-            )  
-
-        wandb.log({
-            "MAE Train": train_err,
-            "Loss Train": train_loss
-        })
-
-    info_str = f'Best -- epoch={best_epoch}, train MAE: {best_train_err:.5f}.\n'                    
-    logger.info(info_str)
-
-    if model_type == "Laplace" or model_type == "BGNN":  
-        model.eval()                                                                
-        trained_model = train_laplace(
-            model=model, train_loader=train_loader, criterion=criterion, 
-            target=target, logger=logger, epochs=epochs, model_type=model_type
-        )                          
-
-    # Evaluate the model                                                                              
-    logger.info(f"Evaluating model.")                                                                   
-
-    if model_type != "Laplace" and model_type != "BGNN":                                                                  
-        model.eval()      
-
-    y = torch.tensor([], device=device, requires_grad=False)                                          
-    pred = torch.tensor([], device=device, requires_grad=False)                                                                 
-    sigma = torch.tensor([], device=device, requires_grad=False)                                                                 
-                                                                                                    
-    with torch.no_grad():                                                                             
-        for _, data in enumerate(test_loader):                                                         
+    with torch.no_grad():
+        for _, data in enumerate(test_loader):
             data = data.to(device)
+            pred_i, sigma_i = model(data)
 
-            if model_type == "Laplace" or model_type == "BGNN":    
-                pred_i, sigma_i = trained_model(data)        
-            elif model_type == "Variational":
-                _, pred_i, sigma_i = model(data)
-            else:
-                pred_i = model(data)
+            pred_i = pred_i.detach() * norm_factor[1] + norm_factor[0]
+            sigma_i = torch.sqrt(sigma_i.detach()) * norm_factor[1]
 
-            pred_i = pred_i.detach() * norm_factor[1] + norm_factor[0]                      
-            sigma_i = torch.sqrt(sigma_i.detach()) * norm_factor[1]                   
-
-            y = torch.cat([y.flatten(), data.y[:, target].flatten()])                            
+            y = torch.cat([y.flatten(), data.y[:, target].flatten()])
             pred = torch.cat([pred.flatten(), pred_i.flatten()])  
             sigma = torch.cat([sigma.flatten(), sigma_i.flatten()])
-            
-            del data
-            torch.cuda.empty_cache()
-            gc.collect()                                                 
-    
+
     logger.info(f"Preparing calibration plot.\n")  
     calibration_plot(
         pred_mu=pred.cpu(), 
@@ -487,32 +285,47 @@ def model_trainer(model, criterion, norm_factor, target, train_data, test_loader
         logger=logger
         )
 
-    logger.info(f"Training complete.\n")                 
-
-    del y, pred, best_epoch, best_train_err, optimizer, scheduler, train_loader
-    torch.cuda.empty_cache()
-    gc.collect()               
-    
-    return trained_model if model_type == "Laplace" or model_type == "BGNN" else model
- 
+    logger.info(f"Training complete.\n")
 
 
+def train_gp(data, logger, lr, device, norm_factor=[0, 1], epochs=300):
+    task_mean = norm_factor[0]
+    task_std = norm_factor[1]
 
-def epoch_process(scheduler, model, criterion, target,
-                  norm_factor,train_loader, val_loader, 
-                  optimizer, device, amp_autocast, 
-                  loss_scaler, print_freq, logger, 
-                  model_type, epoch):
-                                                                                               
-    scheduler.step(epoch)  
+    logger.info(f"Training GP model.")
 
-    train_err, train_loss = train_one_epoch(model=model, criterion=criterion, norm_factor=norm_factor,        
-            target=target, data_loader=train_loader, optimizer=optimizer,                        
-            device=device, epoch=epoch,                                          
-            amp_autocast=amp_autocast, loss_scaler=loss_scaler,                                       
-            print_freq=print_freq, logger=logger, model_type=model_type)           
-                                                                                                    
-    val_err, val_loss = evaluate(model, norm_factor, target, val_loader, device,             
-            amp_autocast=amp_autocast, model_type=model_type)                                  
-                                                                                                                                                                                                                                                       
-    return train_err, train_loss, val_err, val_loss
+    train_x, train_y = data.X.to(device), data.Y.flatten().to(device)
+    likelihood = gpytorch.likelihoods.GaussianLikelihood()
+
+    model = ExactGPModel(train_x, train_y, likelihood)
+    model = model.to(device)
+
+    model.train()
+    likelihood.train()
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+
+    counter = 0
+    best_loss = float('inf')
+    for i in range(epochs):
+        optimizer.zero_grad()
+
+        output = model(train_x) * task_std + task_mean
+        loss = -mll(output, train_y)
+
+        loss.backward()
+        optimizer.step()
+        
+        if loss < best_loss:
+            best_loss = loss
+            counter = 0 
+        else:
+            counter += 1
+        
+        if counter > 10:
+            break
+
+    logger.info(f"GP training complete.\n")
+
+    return model

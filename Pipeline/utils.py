@@ -1,3 +1,4 @@
+import os
 import torch
 import matplotlib.pyplot as plt
 
@@ -54,3 +55,18 @@ def calibration_plot(
         plt.legend()
         wandb.log({"Comparison Quantiles": plt})
         plt.close()
+
+
+def save_checkpoint(encoder, decoder, optimizer, scheduler, epoch, train_loss, args):
+    path = os.getcwd()
+    path += f'/checkpoints/Checkpoint_{args.model_type}_{args.dataset_size // 1000}_'
+    path += f'{"Single" if len(args.target) == 1 else "Multiple"}.pth.tar'
+
+    torch.save({
+        'epoch': epoch,
+        'model_state_dict': encoder.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'scheduler_state_dict': scheduler.state_dict(),
+        'loss': train_loss,
+        'decoder_state_dict': decoder.state_dict()
+        }, path)

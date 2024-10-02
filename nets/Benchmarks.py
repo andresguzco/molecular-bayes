@@ -9,9 +9,24 @@ import warnings
 from torch import Tensor
 from torch_scatter import scatter
 from torch_geometric.nn import MessagePassing, global_mean_pool
+from gauche.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from ocpmodels.common.registry import registry
 
 warnings.filterwarnings("ignore")
+
+
+@registry.register_model("MLP")
+class MLP(torch.nn.Module):
+    def __init__(self, input_dim: int = 64, hidden_dim: int = 16, output_dim: int = 1):
+        super().__init__()
+        self.decoder = torch.nn.Sequential(
+            torch.nn.Linear(input_dim, hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim, output_dim)
+        )
+
+    def forward(self, x):
+        return self.decoder(x)
 
 
 @registry.register_model("GP_Exact")
@@ -25,13 +40,13 @@ class ExactGPModel(gpytorch.models.ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-
-@registry.register_model("GP_Approximate")
-class ApproxGPModel(gpytorch.models.ApproximateGP):
-    def __init__(variational_strategy):
-        super().__init__(variational_strategy)
+    
+@registry.register_model("GP_Tanimoto")
+class TanimotoGPModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood):
+        super(TanimotoGPModel, self).__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ConstantMean()
-        self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.MaternKernel())
+        self.covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
 
     def forward(self, x):
         mean_x = self.mean_module(x)
@@ -51,22 +66,6 @@ class ExactMordredGPModel(gpytorch.models.ExactGP):
         covar_x = self.covar_module(x)
         covar += torch.eye(x.size(0)) * 1e-3
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-
-
-@registry.register_model("MPNN_Benchmark")
-class Benchmark2D(torch.nn.Module):
-    def __init__(self, node_attributes: int = 5, edge_attributes: int = 4, ffn_hidden: int = 350):
-        super().__init__()
-        self.encoder_layer = GNNEncoder(node_attributes, edge_attributes)
-        self.last_layer = torch.nn.Sequential(
-            torch.nn.Linear(edge_attributes, ffn_hidden),
-            torch.nn.ReLU(),
-            torch.nn.Linear(ffn_hidden, 1)
-        )
-
-    def forward(self, data):
-        h = self.encoder_layer(data)
-        return self.last_layer(h)
 
 
 class MolEncoder(metaclass=ABCMeta):
@@ -134,14 +133,15 @@ class LearnableMolEncoder(MolEncoder, torch.nn.Module, metaclass=ABCMeta):
         torch.nn.Module.to(self, device)
 
 
+@registry.register_model("MPNN_Benchmark")
 class GNNEncoder(LearnableMolEncoder):
     def __init__(
             self,
             node_attributes: int = 5,
             edge_attributes: int = 4,
-            hidden_size: int = 512,
-            num_layers: int = 2,
-            latent_dim: int = 4,
+            hidden_size: int = 280,
+            num_layers: int = 3,
+            latent_dim: int = 64,
             variational: bool = False,
             pooling_type = global_mean_pool,
             learning_rate: float = 1e-3,

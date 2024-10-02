@@ -172,5 +172,6 @@ wandb/
 logs/
 
 # QM9 dataset files
+.DS_Store
 datasets/QM9/
 datasets/qm9/
