@@ -12,7 +12,7 @@
 # sacctmgr list qos format=Name%15,Priority,MaxWall,MaxTRESPerUser normal,m,m2,m3,m4,m5,long
 #SBATCH --qos=cpu_qos
 #SBATCH --time=20:00:00
-#SBATCH --output=results/slurm/slurm-%j.out
+#SBATCH --output=results/slurm-%j.out
 
 # Append is important because otherwise preemption resets the file
 #SBATCH --open-mode=append
