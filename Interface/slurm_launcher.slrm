@@ -4,14 +4,14 @@
 # https://support.vectorinstitute.ai/Vaughan_slurm_changes
 #SBATCH --job-name=Equibayes
 #SBATCH --mem=16G
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=32
 # a40, 48GB, gpu[001-015], gpu[027-056]
 # rtx6000, 24GB
 #SBATCH --partition=cpu
 
 # sacctmgr list qos format=Name%15,Priority,MaxWall,MaxTRESPerUser normal,m,m2,m3,m4,m5,long
 #SBATCH --qos=cpu_qos
-#SBATCH --time=10:00:00
+#SBATCH --time=20:00:00
 #SBATCH --output=results/slurm/slurm-%j.out
 
 # Append is important because otherwise preemption resets the file
@@ -22,7 +22,7 @@ echo $(date): Job $SLURM_JOB_ID is allocated resources.
 # the recommendation is to keep erything that defines the workload itself in a separate script
 echo "Inside slurm_launcher.slrm ($0). received arguments: $@"
 
-HOME_DIR=/h/username
+HOME_DIR=/h/aguzmanc
 SCRIPTDIR=${HOME_DIR}/3D_Bayes
 
 # this will run the script
