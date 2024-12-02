@@ -15,8 +15,8 @@ from contextlib import suppress
 
 from ocpmodels.common.registry import registry
 
-from Interface.pars_args import get_args_parser
-from Pipeline import ( 
+from interface.pars_args import get_args_parser
+from pipeline import ( 
     FileLogger, 
     BayesianOptimiser,
     train_gp

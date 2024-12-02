@@ -14,8 +14,8 @@ for size in "${sizes[@]}"; do
     for target in "${targets[@]}"; do
       for type in "${bayes_types[@]}"; do
         for seed in "${seeds[@]}"; do
-          sbatch Interface/slurm_launcher.slrm main.py \
-            --output-dir "results/models/laplace_${model}_${size// 1000/}_{${target}" \
+          sbatch interface/slurm_launcher.slrm main.py \
+            --output-dir "results/laplace_${model}_${size// 1000/}_{${target}" \
             --model-name "${model}" \
             --data-path 'datasets/qm9' \
             --model-type "${type}" \
