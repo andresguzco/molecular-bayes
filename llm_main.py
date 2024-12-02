@@ -12,7 +12,7 @@ from pathlib import Path
 import argparse
 import math
 import matplotlib.pyplot as plt
-from Interface.pars_args import get_args_parser
+from interface.pars_args import get_args_parser
 from datetime import datetime
 from torch import nn
 from transformers import AutoModel, AutoTokenizer
@@ -21,7 +21,7 @@ from lapeft_bayesopt.utils.acqf import thompson_sampling
 from lapeft_bayesopt.utils import helpers
 from lapeft_bayesopt.problems.prompting import PromptBuilder
 
-from Pipeline import FileLogger
+from pipeline import FileLogger
 import wandb
 
 from torch import nn, optim

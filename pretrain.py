@@ -17,8 +17,8 @@ from timm.utils import NativeScaler
 from timm.scheduler import create_scheduler
 from ocpmodels.common.registry import registry
 
-from Interface.pars_args import get_args_parser
-from Pipeline import (
+from interface.pars_args import get_args_parser
+from pipeline import (
     compute_stats, 
     FileLogger,
     train_one_epoch, 

@@ -7,7 +7,7 @@ models=('equiformer_v2') # 'MPNN_Benchmark')
 # Loop through the combinations of sizes and targets
 for size in "${sizes[@]}"; do
   for model in "${models[@]}"; do
-    sbatch Interface/slurm_launcher.slrm pretrain.py \
+    sbatch interface/slurm_launcher.slrm pretrain.py \
       --output-dir "results/models/laplace_${model}_${size//1000/}_Single" \
       --model-name "${model}" \
       --data-path 'datasets/qm7b' \

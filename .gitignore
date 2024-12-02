@@ -177,3 +177,5 @@ my_datasets/qm9
 my_datasets/qm7
 my_datasets/rdkit_folder
 my_datasets/moelcule_net
+
+*.out
